@@ -1,0 +1,2431 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buchstaben</title>
+    <!-- html2canvas for JPEG export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'DEM-MOMono-400';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-400.otf') format('opentype');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'DEM-MOMono-300';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-300.otf') format('opentype');
+            font-weight: 300;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'DEM-MOMono-700';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-700.otf') format('opentype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Info Button */
+        .info-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 0;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            padding: 0;
+        }
+
+        .info-button:hover {
+            background-color: #333333;
+        }
+
+        /* Home Button */
+        .home-button {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 0;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .home-button:hover {
+            background-color: #333333;
+        }
+
+        /* Floating Info Window */
+        .info-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .info-overlay.active {
+            display: flex;
+        }
+
+        .info-window {
+            background-color: #ffffff;
+            width: 80%;
+            max-width: 780px;
+            max-height: 90vh;
+            position: relative;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            font-family: 'DEM-MOMono-400', monospace;
+        }
+        
+        .info-window p {
+            font-family: 'DEM-MOMono-400', monospace;
+            line-height: 1.6;
+        }
+
+        .info-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background-color: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .info-close:hover {
+            color: #666666;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            padding: 40px;
+            gap: 40px;
+            position: relative;
+        }
+
+        .text-container {
+            max-width: none;
+            width: 1200px; /* Fixe Breite statt auto */
+            min-width: 800px;
+            overflow: visible; /* Allow words to move outside */
+            display: flex;
+            flex-direction: column;
+            justify-self: center; /* Zentriere den Textblock im Grid */
+            margin-left: 350px; /* Platz für das fixierte Menü links */
+            padding: 40px; /* Festes Padding für konsistentes Layout */
+        }
+
+        .text-content {
+            text-align: justify;
+            text-align-last: justify;
+            line-height: 1.8; /* Mehr Zeilenabstand */
+            font-size: 18px;
+            overflow: visible; /* Allow words to move outside */
+            position: relative;
+            width: 100%;
+            height: auto; /* Automatische Höhe basierend auf Inhalt */
+        }
+
+        .text-content .word {
+            display: inline-block;
+            position: relative;
+            margin: 0 15px;
+        }
+
+        .word {
+            display: inline-block;
+            position: relative;
+            transition: transform 0.1s ease-out;
+            margin: 0 8px; /* Reduzierter Abstand für besseres Layout */
+            white-space: nowrap; /* Verhindert Zeilenumbruch innerhalb eines Wortes */
+        }
+
+        .word.auto-animated {
+            /* Animation wird per JavaScript gesteuert */
+            will-change: transform;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-family: 'DEM-MOMono-400', monospace;
+            background-color: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        .dance-button {
+            padding: 24px 24px !important;
+            font-size: 16px;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex-shrink: 0;
+            position: fixed;
+            left: 40px;
+            top: 20px;
+            bottom: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 100;
+            padding-right: 10px;
+        }
+
+        /* Custom Scrollbar für die Sidebar */
+        .left-panel::-webkit-scrollbar {
+            width: 2px;
+        }
+
+        .left-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .left-panel::-webkit-scrollbar-thumb {
+            background: #000000;
+            border-radius: 4px;
+        }
+
+        .left-panel::-webkit-scrollbar-thumb:hover {
+            background: #333333;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 14px;
+        }
+
+        .tempo-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tempo-control input[type="range"] {
+            width: 200px;
+            cursor: pointer;
+        }
+
+        .tempo-value {
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 14px;
+            min-width: 40px;
+        }
+
+        .direction-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .direction-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            font-family: 'DEM-MOMono-400', monospace;
+            background-color: #ffffff;
+            color: #000000;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            width: 100%;
+        }
+
+        .direction-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .direction-btn.active {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .direction-btn:not(.active) {
+            opacity: 0.6;
+        }
+
+        /* Combine Modes Toggle */
+        .combine-modes-toggle {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-family: 'DEM-MOMono-700', monospace;
+            background-color: #ffffff;
+            color: #000000;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .combine-modes-toggle:hover {
+            background-color: #f0f0f0;
+        }
+
+        .combine-modes-toggle.active {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+
+        .toggle-status {
+            padding: 2px 8px;
+            border: 1px solid currentColor;
+            font-size: 11px;
+        }
+
+        /* Advanced Settings Panel */
+        .advanced-settings-toggle {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-family: 'DEM-MOMono-700', monospace;
+            background-color: #ffffff;
+            color: #000000;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .advanced-settings-toggle:hover {
+            background-color: #f0f0f0;
+        }
+
+        .advanced-settings-toggle::after {
+            content: '▼';
+            transition: transform 0.3s;
+        }
+
+        .advanced-settings-toggle.active::after {
+            transform: rotate(180deg);
+        }
+
+        .advanced-settings-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background-color: #ffffff;
+            border: none;
+            padding: 0;
+        }
+
+        .advanced-settings-panel.active {
+            max-height: 800px;
+            padding: 20px;
+            border: 2px solid #000000;
+            border-top: none;
+        }
+
+        .advanced-settings-group {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #cccccc;
+        }
+
+        .advanced-settings-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .advanced-settings-group h4 {
+            font-family: 'DEM-MOMono-700', monospace;
+            font-size: 12px;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .advanced-setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .advanced-setting-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .advanced-setting-item label {
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .advanced-setting-item input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .advanced-setting-item input[type="number"] {
+            width: 80px;
+            padding: 4px 8px;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 11px;
+            border: 1px solid #000000;
+            background-color: #ffffff;
+        }
+
+        .advanced-setting-value {
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 11px;
+            color: #666666;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .reset-defaults-btn {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-family: 'DEM-MOMono-400', monospace;
+            background-color: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .reset-defaults-btn:hover {
+            background-color: #333333;
+        }
+
+        .stability-indicator {
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 11px;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #000000;
+            background-color: #ffffff;
+            text-align: center;
+        }
+
+        .stability-indicator.stable {
+            background-color: #ffffff;
+            border-color: #000000;
+            color: #000000;
+        }
+
+        .stability-indicator.warning {
+            background-color: #ffffff;
+            border-color: #000000;
+            color: #000000;
+        }
+
+        .stability-indicator.unstable {
+            background-color: #ffffff;
+            border-color: #000000;
+            color: #000000;
+        }
+
+        .text-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .text-input-container label {
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 14px;
+        }
+
+        .text-input-container textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 14px;
+            border: 2px solid #000000;
+            background-color: #ffffff;
+            color: #000000;
+            resize: vertical;
+        }
+
+        .text-input-container textarea:focus {
+            outline: none;
+            border-color: #000000;
+        }
+
+        .audio-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .audio-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .audio-btn {
+            padding: 12px;
+            font-size: 18px;
+            font-family: 'DEM-MOMono-400', monospace;
+            background-color: #ffffff;
+            color: #000000;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            min-width: 40px;
+        }
+
+        .audio-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .audio-btn.playing {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .audio-btn.active {
+            background-color: #000000;
+            color: #ffffff;
+            border: 3px solid #000000;
+        }
+
+        /* Type Font Selector Sidebar */
+        .type-font-selector-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 350px;
+            height: 100vh;
+            background-color: transparent;
+            z-index: 10001;
+            pointer-events: none;
+        }
+
+        .type-font-selector-overlay.active {
+            display: block;
+            pointer-events: auto;
+        }
+
+        .type-font-selector-popup {
+            background-color: #ffffff;
+            border-right: 3px solid #000000;
+            padding: 30px;
+            width: 100%;
+            height: 100vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .type-font-selector-popup h3 {
+            margin: 0 0 20px 0;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+
+        .type-font-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .type-font-item:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .type-font-item.has-variants::after {
+            content: '▶';
+            position: absolute;
+            right: 15px;
+            font-size: 12px;
+        }
+
+        .type-font-variants-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 350px;
+            width: calc(100% - 350px);
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: 10002;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .type-font-variants-overlay.active {
+            display: flex;
+        }
+
+        .type-font-variants-popup {
+            background-color: #ffffff;
+            border: 3px solid #000000;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .type-font-variants-popup h4 {
+            margin: 0 0 20px 0;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+
+        .type-font-variant-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .type-font-variant-item:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .type-font-variant-item.active {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .close-font-selector {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background-color: transparent;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DEM-MOMono-400', monospace;
+            line-height: 1;
+        }
+
+        .close-font-selector:hover {
+            color: #666666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Info Button -->
+    <button class="info-button" id="infoButton">i</button>
+    
+    <!-- Home Button -->
+    <a href="TECHNOTOOLS.html" class="home-button" id="homeButton">⌂</a>
+
+    <!-- Info Floating Window -->
+    <div class="info-overlay" id="infoOverlay">
+        <div class="info-window">
+            <button class="info-close" id="infoClose">×</button>
+            <p>This interactive website turns your text into a dancing club scene. Paste your words and watch them transform into trance-driven shapes moving like bodies on a techno dancefloor. You control their direction and motion, let them dance to different techno tracks, change the font, run your cursor through the dancing crowd, and capture snapshots of the moving text.</p>
+        </div>
+    </div>
+    <div class="left-panel">
+        <div class="controls">
+            <div class="text-input-container">
+                <label for="textInput">ENTER TEXT:</label>
+                <textarea id="textInput" placeholder="Enter your text here..."></textarea>
+                <button id="exchangeBtn" class="direction-btn" style="margin-top: 5px;">EXCHANGE TEXT</button>
+            </div>
+            
+            <button id="animateBtn" class="dance-button">NOW DANCE</button>
+            
+            <div class="audio-controls">
+                <div class="audio-buttons">
+                    <button class="audio-btn" data-song="0" data-file-wav="Banger_fuer_Emil/Modēm - Xenomorph (Original Mix).wav" data-file-aiff="Banger_fuer_Emil/Modēm - Xenomorph (Original Mix).aiff" data-speed="5.2" data-start="30">▶</button>
+                    <button class="audio-btn" data-song="1" data-file-wav="Banger_fuer_Emil/04 Alazeya.wav" data-file-aif="Banger_fuer_Emil/04 Alazeya.aif" data-speed="4.2" data-start="30">▶</button>
+                    <button class="audio-btn" data-song="2" data-file-wav="Banger_fuer_Emil/Frederic. - Fainted (MCR-T Remix).wav" data-file-aiff="Banger_fuer_Emil/Frederic. - Fainted (MCR-T Remix).aiff" data-speed="4.7" data-start="30">▶</button>
+                    <button class="audio-btn" data-song="3" data-file-wav="Banger_fuer_Emil/Jeff Mills - The Bells (Original Mix).wav" data-speed="4.2" data-start="10">▶</button>
+                    <button class="audio-btn" data-song="4" data-file-wav="Banger_fuer_Emil/Versus - Continuous Groove.wav" data-file-aiff="Banger_fuer_Emil/Versus - Continuous Groove.aiff" data-speed="5.5" data-start="215">▶</button>
+                </div>
+            </div>
+            
+            <button id="typeButton">TYPE</button>
+            <button id="saveJpegBtn">Save as JPEG</button>
+            <button id="recordVideoBtn">Record Video (5s)</button>
+            
+            <div class="control-group">
+                <label>MOVEMENT DIRECTION:</label>
+                <div class="direction-buttons">
+                    <button class="direction-btn active" data-direction="horizontal">LEFT ↔ RIGHT</button>
+                    <button class="direction-btn" data-direction="vertical">UP ↔ DOWN</button>
+                    <button class="direction-btn" data-direction="circular">CIRCLE</button>
+                    <button class="direction-btn" data-direction="wave">WAVE</button>
+                    <button class="direction-btn" data-direction="spiral">SPIRAL</button>
+                    <button class="direction-btn" data-direction="shockwave">SHOCKWAVE</button>
+                    <button class="direction-btn" data-direction="figure8">FIGURE 8</button>
+                    <button class="direction-btn" data-direction="random">RANDOM MIX</button>
+                    <button class="direction-btn" data-direction="bounce">BOUNCE</button>
+                    <button class="direction-btn" data-direction="zigzag">ZIGZAG</button>
+                </div>
+                <button class="combine-modes-toggle" id="combineModesToggle">
+                    <span class="toggle-label">COMBINE EFFECTS</span>
+                    <span class="toggle-status">OFF</span>
+                </button>
+            </div>
+            
+            <div class="control-group">
+                <label for="tempoSlider">TEMPO:</label>
+                <div class="tempo-control">
+                    <input type="range" id="tempoSlider" min="0.5" max="6" step="0.1" value="1.5">
+                    <span class="tempo-value" id="tempoValue">1.5x</span>
+                </div>
+            </div>
+
+            <!-- Advanced Settings Panel -->
+            <div class="control-group">
+                <button class="advanced-settings-toggle" id="advancedSettingsToggle">
+                    ADVANCED SETTINGS
+                </button>
+                <div class="advanced-settings-panel" id="advancedSettingsPanel">
+                    <!-- Container Settings -->
+                    <div class="advanced-settings-group">
+                        <h4>Container</h4>
+                        <div class="advanced-setting-item">
+                            <label>
+                                <span>Container Width</span>
+                                <span class="advanced-setting-value" id="containerWidthValue">1200px</span>
+                            </label>
+                            <input type="range" id="containerWidth" min="600" max="2000" step="50" value="1200">
+                        </div>
+                        <div class="advanced-setting-item">
+                            <label>
+                                <span>Container Padding</span>
+                                <span class="advanced-setting-value" id="containerPaddingValue">40px</span>
+                            </label>
+                            <input type="range" id="containerPadding" min="0" max="100" step="5" value="40">
+                        </div>
+                        <div class="advanced-setting-item">
+                            <label>
+                                <span>Line Height</span>
+                                <span class="advanced-setting-value" id="lineHeightValue">1.8</span>
+                            </label>
+                            <input type="range" id="lineHeight" min="1.0" max="3.0" step="0.1" value="1.8">
+                        </div>
+                        <div class="advanced-setting-item">
+                            <label>
+                                <span>Font Size</span>
+                                <span class="advanced-setting-value" id="fontSizeValue">18px</span>
+                            </label>
+                            <input type="range" id="fontSize" min="10" max="36" step="1" value="18">
+                        </div>
+                    </div>
+
+
+
+                    <!-- Stability Indicator -->
+                    <div class="stability-indicator" id="stabilityIndicator">
+                        Configuration is STABLE
+                    </div>
+
+                    <!-- Reset Button -->
+                    <button class="reset-defaults-btn" id="resetDefaultsBtn">
+                        Reset to Optimal Defaults
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-container">
+        <p class="text-content" id="textContent">
+            The techno scene emerged in the late 1980s as a revolutionary movement that combined electronic music with a new aesthetic. Its roots lie in Detroit, where pioneers like Juan Atkins, Derrick May, and Kevin Saunderson laid the foundations for a musical genre characterized by repetitive beats, synthetic sounds, and a futuristic vision. The scene developed in parallel across various cities, with Berlin becoming an important center after the fall of the Wall. Techno was more than just music – it became a cultural movement that celebrated freedom, individuality, and community. Rave culture, with its long nights, minimalist sounds, and open atmosphere, created spaces where people came together to dance, celebrate, and explore new forms of expression. The techno scene stands for innovation, experimentation, and an attitude that transcends conventional boundaries, opening new paths for musical and social coexistence. The techno scene emerged in the late 1980s as a revolutionary movement that combined electronic music with a new aesthetic. Its roots lie in Detroit, where pioneers like Juan Atkins, Derrick May, and Kevin Saunderson laid the foundations for a musical genre characterized by repetitive beats, synthetic sounds, and a futuristic vision. The scene developed in parallel across various cities, with Berlin becoming an important center after the fall of the Wall. Techno was more than just music – it became a cultural movement that celebrated freedom, individuality, and community. Rave culture, with its long nights, minimalist sounds, and open atmosphere, created spaces where people came together to dance, celebrate, and explore new forms of expression. The techno scene stands for innovation, experimentation, and an attitude that transcends conventional boundaries, opening new paths for musical and social coexistence.
+        </p>
+    </div>
+
+    <!-- Type Font Selector Modal -->
+    <div class="type-font-selector-overlay" id="typeFontSelectorOverlay">
+        <div class="type-font-selector-popup">
+            <button class="close-font-selector" id="closeTypeFontSelector">×</button>
+            <h3>Select Font Family</h3>
+            <div id="typeFontSelectorContent"></div>
+        </div>
+    </div>
+
+    <!-- Type Font Variants Modal -->
+    <div class="type-font-variants-overlay" id="typeFontVariantsOverlay">
+        <div class="type-font-variants-popup">
+            <button class="close-font-selector" id="closeTypeFontVariants">×</button>
+            <h4 id="typeFontVariantsTitle">Font Variants</h4>
+            <div id="typeFontVariantsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const animateBtn = document.getElementById('animateBtn');
+        const textContent = document.getElementById('textContent');
+        const textInput = document.getElementById('textInput');
+        const exchangeBtn = document.getElementById('exchangeBtn');
+        const tempoSlider = document.getElementById('tempoSlider');
+        const tempoValue = document.getElementById('tempoValue');
+        let words = [];
+        let isAnimated = false;
+        let animationFrameId = null;
+        let isInitialized = false;
+        let tempoMultiplier = 1.5; // Default tempo
+        let activeDirections = new Set(['horizontal']); // Can contain multiple directions
+        let audioFiles = []; // Array to store audio objects
+        let currentlyPlaying = null; // Track which song is currently playing
+        let combineModesEnabled = false; // Toggle for combining all modes
+
+        // Advanced Settings Variables with Optimal Defaults
+        let containerWidth = 1200;
+        let containerPadding = 40;
+        let lineHeight = 1.8;
+        let fontSize = 18;
+        let amplitudeMin = 8;
+        let amplitudeVariation = 4;
+        let phaseOffset = 0.15;
+        let speedVariation = 0.2;
+
+        // Function to calculate stability based on current settings
+        function calculateStability() {
+            const maxAmplitude = amplitudeMin + amplitudeVariation * 4; // Worst case amplitude
+            const availableSpace = containerPadding; // Space from container edge
+            
+            // Calculate safety margin: available space should be >= max movement
+            const safetyMargin = availableSpace - maxAmplitude;
+            
+            let status = 'stable';
+            let message = 'Configuration is STABLE';
+            
+            if (safetyMargin < 0) {
+                status = 'unstable';
+                message = 'UNSTABLE: Amplitude too large for padding!';
+            } else if (safetyMargin < maxAmplitude * 0.3) {
+                status = 'warning';
+                message = 'WARNING: Low stability margin';
+            }
+            
+            return { status, message, safetyMargin };
+        }
+
+        // Function to update stability indicator
+        function updateStabilityIndicator() {
+            const stabilityIndicator = document.getElementById('stabilityIndicator');
+            const { status, message, safetyMargin } = calculateStability();
+            
+            stabilityIndicator.className = 'stability-indicator ' + status;
+            stabilityIndicator.textContent = message;
+            
+            if (status === 'stable') {
+                stabilityIndicator.textContent += ` (Margin: ${safetyMargin.toFixed(0)}px)`;
+            }
+        }
+
+        // Advanced Settings Panel Toggle
+        const advancedSettingsToggle = document.getElementById('advancedSettingsToggle');
+        const advancedSettingsPanel = document.getElementById('advancedSettingsPanel');
+        
+        advancedSettingsToggle.addEventListener('click', () => {
+            advancedSettingsToggle.classList.toggle('active');
+            advancedSettingsPanel.classList.toggle('active');
+        });
+
+        // Advanced Settings Event Listeners
+        const advancedSettings = {
+            containerWidth: {
+                input: document.getElementById('containerWidth'),
+                display: document.getElementById('containerWidthValue'),
+                unit: 'px',
+                apply: (value) => {
+                    containerWidth = parseInt(value);
+                    document.querySelector('.text-container').style.width = containerWidth + 'px';
+                }
+            },
+            containerPadding: {
+                input: document.getElementById('containerPadding'),
+                display: document.getElementById('containerPaddingValue'),
+                unit: 'px',
+                apply: (value) => {
+                    containerPadding = parseInt(value);
+                    document.querySelector('.text-container').style.padding = containerPadding + 'px';
+                }
+            },
+            lineHeight: {
+                input: document.getElementById('lineHeight'),
+                display: document.getElementById('lineHeightValue'),
+                unit: '',
+                apply: (value) => {
+                    lineHeight = parseFloat(value);
+                    textContent.style.lineHeight = lineHeight;
+                }
+            },
+            fontSize: {
+                input: document.getElementById('fontSize'),
+                display: document.getElementById('fontSizeValue'),
+                unit: 'px',
+                apply: (value) => {
+                    fontSize = parseInt(value);
+                    textContent.style.fontSize = fontSize + 'px';
+                }
+            }
+        };
+
+        // Attach event listeners to all advanced settings
+        Object.keys(advancedSettings).forEach(key => {
+            const setting = advancedSettings[key];
+            if (setting && setting.input && setting.display) {
+                setting.input.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    setting.display.textContent = value + setting.unit;
+                    setting.apply(value);
+                    updateStabilityIndicator();
+                });
+            }
+        });
+
+        // Function to update word animation parameters
+        function updateWordAnimationParams() {
+            const wordElements = textContent.querySelectorAll('.word');
+            wordElements.forEach((word, index) => {
+                word.dataset.phase = (index * phaseOffset) % (Math.PI * 2);
+                word.dataset.baseSpeed = 1.0 + (index % 7) * speedVariation;
+                word.dataset.amplitude = amplitudeMin + (index % 4) * amplitudeVariation;
+            });
+        }
+
+        // Reset to Defaults Button
+        const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
+        resetDefaultsBtn.addEventListener('click', () => {
+            // Reset all values to optimal defaults
+            const defaults = {
+                containerWidth: 1200,
+                containerPadding: 40,
+                lineHeight: 1.8,
+                fontSize: 18
+            };
+
+            Object.keys(defaults).forEach(key => {
+                const setting = advancedSettings[key];
+                if (setting && setting.input && setting.display) {
+                    setting.input.value = defaults[key];
+                    setting.display.textContent = defaults[key] + setting.unit;
+                    setting.apply(defaults[key]);
+                }
+            });
+
+            updateStabilityIndicator();
+            alert('All settings reset to optimal defaults!');
+        });
+
+        // Initialize stability indicator
+        updateStabilityIndicator();
+
+        // Initialize audio buttons with tempo control
+        const audioButtons = document.querySelectorAll('.audio-btn');
+        let activeTempoButton = null;
+        
+        audioButtons.forEach((btn, index) => {
+            const audioFileWav = btn.dataset.fileWav;
+            const audioFileAiff = btn.dataset.fileAiff || btn.dataset.fileAif;
+            const audioFile = audioFileWav || audioFileAiff; // Use WAV as primary, AIFF as fallback
+            const speed = parseFloat(btn.dataset.speed);
+            const startTime = parseFloat(btn.dataset.start) || 30; // Default to 30 seconds if not specified
+            
+            btn.addEventListener('click', () => {
+                const isCurrentlyActive = btn.classList.contains('active');
+                
+                // Remove active class from all buttons
+                audioButtons.forEach(b => b.classList.remove('active'));
+                
+                // If same button clicked (toggle off)
+                if (isCurrentlyActive && activeTempoButton === index) {
+                    // Reset to default tempo
+                    tempoMultiplier = 1.5;
+                    tempoSlider.value = 1.5;
+                    tempoValue.textContent = '1.5x';
+                    activeTempoButton = null;
+                    
+                    // Stop audio if playing
+                    if (currentlyPlaying === index && audioFiles[index]) {
+                        audioFiles[index].pause();
+                        btn.textContent = '▶';
+                        btn.classList.remove('playing');
+                        currentlyPlaying = null;
+                    }
+                } else {
+                    // Activate clicked button and set tempo
+                    btn.classList.add('active');
+                    tempoMultiplier = speed;
+                    tempoSlider.value = speed;
+                    tempoValue.textContent = speed.toFixed(1) + 'x';
+                    activeTempoButton = index;
+                    
+                    // Start animation if not already running
+                    if (!isAnimated) {
+                        // Initialize words if not done yet
+                        if (!isInitialized) {
+                            initializeWords();
+                        }
+                        
+                        // Check if words are available
+                        if (words.length === 0) {
+                            alert('Bitte geben Sie zuerst einen Text ein und klicken Sie auf "EXCHANGE TEXT"!');
+                            return;
+                        }
+                        
+                        // Start animation
+                        startAutoAnimation();
+                        isAnimated = true;
+                    }
+                    
+                    // Play audio if button has an audio file
+                    if (audioFile) {
+                        // If this button is already playing, pause it
+                        if (currentlyPlaying === index) {
+                            if (audioFiles[index] && !audioFiles[index].paused) {
+                                audioFiles[index].pause();
+                                btn.textContent = '▶';
+                                btn.classList.remove('playing');
+                                currentlyPlaying = null;
+                            }
+                        } else {
+                            // Stop any currently playing audio
+                            if (currentlyPlaying !== null && audioFiles[currentlyPlaying]) {
+                                audioFiles[currentlyPlaying].pause();
+                                audioFiles[currentlyPlaying].currentTime = 0;
+                                audioButtons[currentlyPlaying].textContent = '▶';
+                                audioButtons[currentlyPlaying].classList.remove('playing');
+                                currentlyPlaying = null;
+                            }
+                            
+                            // Create audio object if it doesn't exist
+                            if (!audioFiles[index]) {
+                                audioFiles[index] = document.createElement('audio');
+                                audioFiles[index].loop = true;
+                                
+                                // Add WAV source as primary
+                                const wavFile = btn.dataset.fileWav;
+                                if (wavFile) {
+                                    const sourceWav = document.createElement('source');
+                                    sourceWav.src = wavFile;
+                                    sourceWav.type = 'audio/wav';
+                                    audioFiles[index].appendChild(sourceWav);
+                                }
+                                
+                                // Add AIFF as fallback
+                                const aiffFile = btn.dataset.fileAiff || btn.dataset.fileAif;
+                                if (aiffFile) {
+                                    const sourceAiff = document.createElement('source');
+                                    sourceAiff.src = aiffFile;
+                                    sourceAiff.type = aiffFile.endsWith('.aif') ? 'audio/aiff' : 'audio/x-aiff';
+                                    audioFiles[index].appendChild(sourceAiff);
+                                }
+                                
+                                audioFiles[index].addEventListener('ended', () => {
+                                    btn.textContent = '▶';
+                                    btn.classList.remove('playing');
+                                    currentlyPlaying = null;
+                                });
+                            }
+                            
+                            // Set start time from button's data-start attribute (default: 30 seconds)
+                            audioFiles[index].currentTime = startTime;
+                            
+                            // Play the audio
+                            audioFiles[index].play().catch(error => {
+                                console.log('Audio play failed:', error);
+                            });
+                            
+                            btn.textContent = '⏸';
+                            btn.classList.add('playing');
+                            currentlyPlaying = index;
+                        }
+                    }
+                }
+            });
+        });
+
+        // Exchange Text Button - exchanges text
+        exchangeBtn.addEventListener('click', () => {
+            const newText = textInput.value.trim();
+            if (newText) {
+                textContent.textContent = newText;
+                // Reset initialization so text is split again
+                isInitialized = false;
+                
+                // If animation is running, stop it
+                if (isAnimated) {
+                    stopAutoAnimation();
+                    const wordElements = textContent.querySelectorAll('.word');
+                    wordElements.forEach(word => {
+                        word.style.transform = '';
+                    });
+                    isAnimated = false;
+                }
+            } else {
+                alert('Please enter a text!');
+            }
+        });
+
+        // Tempo slider event listener
+        tempoSlider.addEventListener('input', (e) => {
+            tempoMultiplier = parseFloat(e.target.value);
+            tempoValue.textContent = tempoMultiplier.toFixed(1) + 'x';
+        });
+
+        // Combine Modes Toggle
+        const combineModesToggle = document.getElementById('combineModesToggle');
+        combineModesToggle.addEventListener('click', () => {
+            combineModesEnabled = !combineModesEnabled;
+            combineModesToggle.classList.toggle('active');
+            
+            const statusSpan = combineModesToggle.querySelector('.toggle-status');
+            statusSpan.textContent = combineModesEnabled ? 'ON' : 'OFF';
+        });
+
+        // Movement direction buttons - by default only one can be active, unless combine mode is enabled
+        const directionButtons = document.querySelectorAll('.direction-btn');
+        directionButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const direction = btn.dataset.direction;
+                
+                if (combineModesEnabled) {
+                    // Combine mode is enabled: allow multiple effects
+                    // Toggle this direction
+                    if (btn.classList.contains('active')) {
+                        btn.classList.remove('active');
+                        activeDirections.delete(direction);
+                    } else {
+                        btn.classList.add('active');
+                        activeDirections.add(direction);
+                    }
+                    
+                    // Ensure at least one direction is active
+                    if (activeDirections.size === 0) {
+                        btn.classList.add('active');
+                        activeDirections.add(direction);
+                    }
+                } else {
+                    // Combine mode is disabled: only one effect at a time
+                    // Deactivate all others and activate only this one
+                    directionButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeDirections.clear();
+                    activeDirections.add(direction);
+                    
+                    // Reset all word rotations when switching modes
+                    resetWordTransforms();
+                }
+            });
+        });
+
+        // Function to reset all word transforms (remove rotation)
+        function resetWordTransforms() {
+            const wordElements = textContent.querySelectorAll('.word');
+            wordElements.forEach(word => {
+                // Clear rotation data
+                word.dataset.currentRotation = 0;
+                word.dataset.currentRotationAxis = '';
+            });
+        }
+
+        // Initialize words
+        function initializeWords() {
+            if (isInitialized) return;
+            
+            // Split text into individual words
+            const text = textContent.textContent.trim();
+            if (!text) {
+                return; // No text available
+            }
+            words = text.split(/\s+/).filter(word => word.length > 0);
+            
+            // Clear container
+            textContent.innerHTML = '';
+            
+            // Create a span element for each word
+            words.forEach((word, index) => {
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'word';
+                wordSpan.textContent = word;
+                
+                // Apply current font to new words
+                wordSpan.style.fontFamily = `'${sentenceFontName}'`;
+                wordSpan.style.fontWeight = sentenceFontWeight;
+                wordSpan.style.fontStyle = sentenceFontStyle;
+                
+                // Add space after each word (except the last)
+                if (index < words.length - 1) {
+                    wordSpan.textContent += ' ';
+                }
+                
+                textContent.appendChild(wordSpan);
+            });
+            
+            isInitialized = true;
+        }
+
+        // Initialize words on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeWords();
+        });
+
+        // Button Event-Listener
+        animateBtn.addEventListener('click', () => {
+            if (!isAnimated) {
+                // Initialize words if not done yet
+                if (!isInitialized) {
+                    initializeWords();
+                }
+                
+                // Check if words are available
+                if (words.length === 0) {
+                    alert('Please enter a text and click "exchange text"!');
+                    return;
+                }
+                
+                // Automatisch den ersten Play-Button aktivieren und Sound starten
+                const firstAudioBtn = audioButtons[0];
+                if (firstAudioBtn) {
+                    // Entferne active class von allen Buttons
+                    audioButtons.forEach(b => b.classList.remove('active'));
+                    
+                    // Aktiviere den ersten Button
+                    firstAudioBtn.classList.add('active');
+                    const firstSpeed = parseFloat(firstAudioBtn.dataset.speed);
+                    tempoMultiplier = firstSpeed;
+                    tempoSlider.value = firstSpeed;
+                    tempoValue.textContent = firstSpeed.toFixed(1) + 'x';
+                    activeTempoButton = 0;
+                    
+                    // Starte den Sound
+                    const audioFile = firstAudioBtn.dataset.file;
+                    if (audioFile) {
+                        // Stoppe alle anderen Sounds
+                        if (currentlyPlaying !== null && audioFiles[currentlyPlaying]) {
+                            audioFiles[currentlyPlaying].pause();
+                            audioFiles[currentlyPlaying].currentTime = 0;
+                            audioButtons[currentlyPlaying].textContent = '▶';
+                            audioButtons[currentlyPlaying].classList.remove('playing');
+                        }
+                        
+                        // Erstelle Audio-Objekt falls noch nicht vorhanden
+                        if (!audioFiles[0]) {
+                            audioFiles[0] = document.createElement('audio');
+                            audioFiles[0].loop = true;
+                            
+                            // Add WAV source as primary
+                            const wavFile = firstAudioBtn.dataset.fileWav;
+                            if (wavFile) {
+                                const sourceWav = document.createElement('source');
+                                sourceWav.src = wavFile;
+                                sourceWav.type = 'audio/wav';
+                                audioFiles[0].appendChild(sourceWav);
+                            }
+                            
+                            // Add AIFF as fallback
+                            const aiffFile = firstAudioBtn.dataset.fileAiff || firstAudioBtn.dataset.fileAif;
+                            if (aiffFile) {
+                                const sourceAiff = document.createElement('source');
+                                sourceAiff.src = aiffFile;
+                                sourceAiff.type = aiffFile.endsWith('.aif') ? 'audio/aiff' : 'audio/x-aiff';
+                                audioFiles[0].appendChild(sourceAiff);
+                            }
+                            
+                            audioFiles[0].addEventListener('ended', () => {
+                                firstAudioBtn.textContent = '▶';
+                                firstAudioBtn.classList.remove('playing');
+                                currentlyPlaying = null;
+                            });
+                        }
+                        
+                        // Set start time from button's data-start attribute (default: 30 seconds)
+                        const firstStartTime = parseFloat(firstAudioBtn.dataset.start) || 30;
+                        audioFiles[0].currentTime = firstStartTime;
+                        
+                        // Spiele den Sound ab
+                        audioFiles[0].play().catch(error => {
+                            console.log('Audio play failed:', error);
+                        });
+                        
+                        firstAudioBtn.textContent = '⏸';
+                        firstAudioBtn.classList.add('playing');
+                        currentlyPlaying = 0;
+                    }
+                }
+                
+                // Start animation (words are already initialized and displayed)
+                startAutoAnimation();
+                
+                isAnimated = true;
+            } else {
+                // Stop animation
+                stopAutoAnimation();
+                
+                // Stoppe den Sound wenn er läuft
+                if (currentlyPlaying !== null && audioFiles[currentlyPlaying]) {
+                    audioFiles[currentlyPlaying].pause();
+                    audioFiles[currentlyPlaying].currentTime = 0;
+                    audioButtons[currentlyPlaying].textContent = '▶';
+                    audioButtons[currentlyPlaying].classList.remove('playing');
+                    audioButtons[currentlyPlaying].classList.remove('active');
+                    currentlyPlaying = null;
+                    activeTempoButton = null;
+                }
+                
+                // Reset all words
+                const wordElements = textContent.querySelectorAll('.word');
+                wordElements.forEach(word => {
+                    word.style.transform = '';
+                });
+                
+                isAnimated = false;
+            }
+        });
+
+        function startAutoAnimation() {
+            // Wenn noch keine Richtung aktiv ist, aktiviere automatisch "Left to Right" (horizontal)
+            if (activeDirections.size === 0) {
+                activeDirections.add('horizontal');
+                // Aktiviere visuell den "LEFT ↔ RIGHT" Button
+                directionButtons.forEach(btn => {
+                    if (btn.dataset.direction === 'horizontal') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+            
+            const wordElements = textContent.querySelectorAll('.word');
+            
+            // Initialize dynamic parameters for each word using advanced settings
+            wordElements.forEach((word, index) => {
+                // Different phases for staggered movement
+                word.dataset.phase = (index * phaseOffset) % (Math.PI * 2);
+                // Base speed (multiplied with tempo)
+                word.dataset.baseSpeed = 1.0 + (index % 7) * speedVariation;
+                // Amplitude based on advanced settings
+                word.dataset.amplitude = amplitudeMin + (index % 4) * amplitudeVariation;
+                
+                // For random mode: assign random movement pattern to each word
+                word.dataset.randomMode = ['horizontal', 'vertical', 'circular'][index % 3];
+                // Random speed multiplier (but tempo-synced: 0.5x, 1x, 1.5x, 2x)
+                word.dataset.randomSpeedMult = [0.5, 1, 1.5, 2][index % 4];
+                
+                // For random mode: some words also rotate around their own axis
+                word.dataset.shouldRotate = (index % 5 === 0 || index % 7 === 0); // ~30% of words rotate
+                word.dataset.rotationSpeed = [0.5, 1, -0.5, -1, 1.5, -1.5][index % 6]; // Positive = clockwise, negative = counter-clockwise
+                word.dataset.rotationAxis = ['z', 'y', 'x'][index % 3]; // z = 2D spin, y = flip horizontal, x = flip vertical
+                
+                // For spiral mode: assign position in spiral
+                word.dataset.spiralIndex = index;
+                
+                // For shockwave mode: store initial position
+                const rect = word.getBoundingClientRect();
+                const containerRect = textContent.getBoundingClientRect();
+                word.dataset.initialX = rect.left - containerRect.left;
+                word.dataset.initialY = rect.top - containerRect.top;
+            });
+            
+            // Shockwave parameters
+            let shockwaveTime = 0;
+            const shockwaveInterval = 2; // New shockwave every 2 seconds
+            let lastShockwave = 0;
+            
+            function animate() {
+                const currentTime = Date.now() / 1000; // Time in seconds
+                
+                wordElements.forEach((word, index) => {
+                    const phase = parseFloat(word.dataset.phase);
+                    const baseSpeed = parseFloat(word.dataset.baseSpeed);
+                    const amplitude = parseFloat(word.dataset.amplitude);
+                    const speed = baseSpeed * tempoMultiplier;
+                    
+                    let baseX = 0;
+                    let baseY = 0;
+                    
+                    // When combine modes is enabled, accumulate all active directions
+                    let modesApplied = 0;
+                    
+                    // WAVE MODE - Words follow a wave pattern
+                    if (activeDirections.has('wave')) {
+                        const wavePhase = (index * 0.3) + (currentTime * speed);
+                        baseX += Math.sin(wavePhase) * amplitude * 1.5;
+                        baseY += Math.cos(wavePhase * 0.5) * amplitude;
+                        modesApplied++;
+                    }
+                    
+                    // SPIRAL MODE - Words move in expanding/contracting spiral
+                    if (activeDirections.has('spiral')) {
+                        const spiralPhase = currentTime * speed + phase;
+                        const spiralRadius = amplitude * (1 + Math.sin(currentTime * speed * 0.3));
+                        const angleOffset = index * 0.2;
+                        baseX += Math.cos(spiralPhase + angleOffset) * spiralRadius;
+                        baseY += Math.sin(spiralPhase + angleOffset) * spiralRadius;
+                        modesApplied++;
+                    }
+                    
+                    // SHOCKWAVE MODE - Random shockwaves ripple through words
+                    if (activeDirections.has('shockwave')) {
+                        // Create new shockwave periodically
+                        if (currentTime - lastShockwave > shockwaveInterval) {
+                            lastShockwave = currentTime;
+                            shockwaveTime = currentTime;
+                        }
+                        
+                        const timeSinceShock = currentTime - shockwaveTime;
+                        const shockSpeed = 0.5; // Speed of shockwave propagation
+                        const shockDistance = timeSinceShock * 100 * speed; // Distance traveled by shockwave
+                        
+                        // Distance of this word from center
+                        const centerX = 0;
+                        const centerY = 0;
+                        const initialX = parseFloat(word.dataset.initialX) || 0;
+                        const initialY = parseFloat(word.dataset.initialY) || 0;
+                        const distanceFromCenter = Math.sqrt(
+                            Math.pow(initialX - centerX, 2) + 
+                            Math.pow(initialY - centerY, 2)
+                        );
+                        
+                        // Wave hits when shockwave distance matches word distance
+                        const hitOffset = Math.abs(shockDistance - distanceFromCenter);
+                        if (hitOffset < 50) {
+                            const intensity = 1 - (hitOffset / 50);
+                            baseX += Math.sin(currentTime * speed * 5) * amplitude * 2 * intensity;
+                            baseY += Math.cos(currentTime * speed * 5) * amplitude * 2 * intensity;
+                        }
+                        modesApplied++;
+                    }
+                    
+                    // FIGURE 8 MODE - Words trace figure-8 pattern
+                    if (activeDirections.has('figure8')) {
+                        const t = currentTime * speed + phase;
+                        baseX += Math.sin(t) * amplitude * 1.5;
+                        baseY += Math.sin(t * 2) * amplitude;
+                        modesApplied++;
+                    }
+                    
+                    // RANDOM MIX MODE - Each word does random movement in tempo
+                    if (activeDirections.has('random')) {
+                        const randomMode = word.dataset.randomMode;
+                        const randomSpeed = speed * parseFloat(word.dataset.randomSpeedMult);
+                        const t = currentTime * randomSpeed + phase;
+                        
+                        if (randomMode === 'horizontal') {
+                            baseX += Math.sin(t) * amplitude;
+                        } else if (randomMode === 'vertical') {
+                            baseY += Math.sin(t) * amplitude;
+                        } else if (randomMode === 'circular') {
+                            baseX += Math.sin(t) * amplitude * 0.7;
+                            baseY += Math.cos(t) * amplitude * 0.7;
+                        }
+                        
+                        // Add rotation for selected words
+                        if (word.dataset.shouldRotate === 'true') {
+                            const rotationSpeed = parseFloat(word.dataset.rotationSpeed);
+                            const rotationAxis = word.dataset.rotationAxis;
+                            const rotationAngle = (currentTime * randomSpeed * rotationSpeed * 50) % 360; // Degrees
+                            
+                            // Store rotation separately so it can be combined with translation
+                            word.dataset.currentRotation = rotationAngle;
+                            word.dataset.currentRotationAxis = rotationAxis;
+                        } else if (!combineModesEnabled) {
+                            word.dataset.currentRotation = 0;
+                        }
+                        modesApplied++;
+                    }
+                    
+                    // BOUNCE MODE - Words bounce up and down with physics
+                    if (activeDirections.has('bounce')) {
+                        const bouncePhase = currentTime * speed + phase;
+                        const bounceHeight = Math.abs(Math.sin(bouncePhase)) * amplitude * 2;
+                        baseY += -bounceHeight; // Negative = upward
+                        // Slight horizontal drift while bouncing
+                        baseX += Math.sin(bouncePhase * 0.5) * amplitude * 0.3;
+                        modesApplied++;
+                    }
+                    
+                    // ZIGZAG MODE - Sharp angular movements
+                    if (activeDirections.has('zigzag')) {
+                        const zigzagPhase = currentTime * speed + phase;
+                        // Use sawtooth wave for sharp angles
+                        const sawtoothX = ((zigzagPhase % 1) * 2 - 1) * amplitude;
+                        const sawtoothY = ((zigzagPhase * 0.7 % 1) * 2 - 1) * amplitude * 0.7;
+                        baseX += sawtoothX;
+                        baseY += sawtoothY;
+                        modesApplied++;
+                    }
+                    
+                    // COMBINABLE MODES (original modes)
+                    if (activeDirections.has('horizontal')) {
+                        // Left to Right
+                        baseX += Math.sin(currentTime * speed + phase) * amplitude;
+                        modesApplied++;
+                    }
+                    
+                    if (activeDirections.has('vertical')) {
+                        // Up to Down
+                        baseY += Math.sin(currentTime * speed + phase) * amplitude;
+                        modesApplied++;
+                    }
+                    
+                    if (activeDirections.has('circular')) {
+                        // Circular movement (combined with others)
+                        const circlePhase = phase + Math.PI / 2; // Shift phase for variation
+                        baseX += Math.sin(currentTime * speed * 0.8 + circlePhase) * amplitude * 0.7;
+                        baseY += Math.cos(currentTime * speed * 0.8 + circlePhase) * amplitude * 0.7;
+                        modesApplied++;
+                    }
+                    
+                    // Normalize if multiple modes are active to prevent too much movement
+                    if (modesApplied > 1 && combineModesEnabled) {
+                        const normalizeFactor = 1 / Math.sqrt(modesApplied);
+                        baseX *= normalizeFactor;
+                        baseY *= normalizeFactor;
+                    }
+                    
+                    // Build transformation with rotation (if in random mode)
+                    let transform = `translateX(${baseX}px) translateY(${baseY}px)`;
+                    
+                    // Add rotation if word should rotate (in random mode)
+                    if (word.dataset.currentRotation) {
+                        const rotation = parseFloat(word.dataset.currentRotation);
+                        const axis = word.dataset.currentRotationAxis || 'z';
+                        
+                        if (axis === 'z') {
+                            // 2D spin around center
+                            transform += ` rotate(${rotation}deg)`;
+                        } else if (axis === 'y') {
+                            // Horizontal flip effect
+                            transform += ` rotateY(${rotation}deg)`;
+                        } else if (axis === 'x') {
+                            // Vertical flip effect
+                            transform += ` rotateX(${rotation}deg)`;
+                        }
+                    }
+                    
+                    // Apply transformation
+                    word.style.transform = transform;
+                });
+                
+                animationFrameId = requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+
+        function stopAutoAnimation() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        // Info Button Functionality
+        const infoButton = document.getElementById('infoButton');
+        const infoOverlay = document.getElementById('infoOverlay');
+        const infoClose = document.getElementById('infoClose');
+
+        infoButton.addEventListener('click', () => {
+            infoOverlay.classList.add('active');
+        });
+
+        infoClose.addEventListener('click', () => {
+            infoOverlay.classList.remove('active');
+        });
+
+        infoOverlay.addEventListener('click', (e) => {
+            if (e.target === infoOverlay) {
+                infoOverlay.classList.remove('active');
+            }
+        });
+
+        // Type Font Selector Functionality
+        let sentenceFont = 'DEM-MOMono-400';
+        let sentenceFontWeight = '400';
+        let sentenceFontStyle = 'normal';
+        let sentenceFontName = 'DEM-MOMono-400';
+
+        // Available fonts with all variants
+        const fontFamilies = {
+            'DEM-MOMono-400': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'DEM-MO typeface/Mono/DEM-MOMono-400.otf' }
+                ]
+            },
+            'ABC Arizona Flare': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-Thin-Trial' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-ThinItalic-Trial' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-Light-Trial' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-LightItalic-Trial' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-Regular-Trial' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-RegularItalic-Trial' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-Medium-Trial' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-MediumItalic-Trial' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-Bold-Trial' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-BoldItalic-Trial' }
+                ]
+            },
+            'ABC Gravity Expanded': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'ABCGravity-Expanded-Trial.otf' }
+                ]
+            },
+            'Conduit': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'conduit/conduit.ttf' }
+                ]
+            },
+            'Pixform': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'pixform/Pixform.ttf' }
+                ]
+            },
+            'DEM-MO typeface': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'DEM-MO typeface/Proportional/DEM-MO-400.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'DEM-MO typeface/Proportional/DEM-MO-700.otf' }
+                ]
+            },
+            'dot_matrix-expanded bold': {
+                variants: [
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'dot_matrix/fonts/ttf/DotMatrix-ExpandedBold.ttf' }
+                ]
+            },
+            'ZT Nature': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/zt_nature/ZTNature-Thin.ttf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/zt_nature/ZTNature-ThinItalic.ttf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/zt_nature/ZTNature-Medium.ttf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/zt_nature/ZTNature-MediumItalic.ttf' },
+                    { name: 'Black', weight: '900', style: 'normal', path: 'Fonts/zt_nature/ZTNature-Black.ttf' },
+                    { name: 'Black Italic', weight: '900', style: 'italic', path: 'Fonts/zt_nature/ZTNature-BlackItalic.ttf' }
+                ]
+            },
+            'Coolvetica': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/coolvetica/Coolvetica Rg.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/coolvetica/Coolvetica Rg It.otf' },
+                    { name: 'Condensed', weight: '400', style: 'normal', path: 'Fonts/coolvetica/Coolvetica Rg Cond.otf' },
+                    { name: 'Compressed', weight: '400', style: 'normal', path: 'Fonts/coolvetica/Coolvetica Rg Cram.otf' },
+                    { name: 'Heavy Compressed', weight: '900', style: 'normal', path: 'Fonts/coolvetica/Coolvetica Hv Comp.otf' }
+                ]
+            },
+            'Heavitas': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/heavitas/Heavitas.ttf' }
+                ]
+            },
+            'Pixel Digivolve': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/pixel_digivolve/Pixel Digivolve.otf' },
+                    { name: 'Italic', weight: '400', style: 'italic', path: 'Fonts/pixel_digivolve/Pixel Digivolve Italic.otf' }
+                ]
+            },
+            'ABC Diatype': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/ABCDiatype-Thin-Trial.otf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/ABCDiatype-ThinItalic-Trial.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/ABCDiatype-Light-Trial.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/ABCDiatype-LightItalic-Trial.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/ABCDiatype-Regular-Trial.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/ABCDiatype-RegularItalic-Trial.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/ABCDiatype-Medium-Trial.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/ABCDiatype-MediumItalic-Trial.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/ABCDiatype-Bold-Trial.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/ABCDiatype-BoldItalic-Trial.otf' },
+                    { name: 'Heavy', weight: '800', style: 'normal', path: 'Fonts/ABCDiatype-Heavy-Trial.otf' },
+                    { name: 'Heavy Italic', weight: '800', style: 'italic', path: 'Fonts/ABCDiatype-HeavyItalic-Trial.otf' },
+                    { name: 'Black', weight: '900', style: 'normal', path: 'Fonts/ABCDiatype-Black-Trial.otf' },
+                    { name: 'Black Italic', weight: '900', style: 'italic', path: 'Fonts/ABCDiatype-BlackItalic-Trial.otf' },
+                    { name: 'Ultra', weight: '950', style: 'normal', path: 'Fonts/ABCDiatype-Ultra-Trial.otf' },
+                    { name: 'Ultra Italic', weight: '950', style: 'italic', path: 'Fonts/ABCDiatype-UltraItalic-Trial.otf' }
+                ]
+            },
+            'ABC Gravity': {
+                variants: [
+                    { name: 'Normal', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Normal-Trial.otf' },
+                    { name: 'Normal Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-NormalItalic-Trial.otf' },
+                    { name: 'Condensed', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Condensed-Trial.otf' },
+                    { name: 'Condensed Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-CondensedItalic-Trial.otf' },
+                    { name: 'Expanded', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Expanded-Trial.otf' },
+                    { name: 'Expanded Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-ExpandedItalic-Trial.otf' },
+                    { name: 'Extended', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Extended-Trial.otf' },
+                    { name: 'Extended Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-ExtendedItalic-Trial.otf' },
+                    { name: 'Compressed', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Compressed-Trial.otf' },
+                    { name: 'Compressed Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-CompressedItalic-Trial.otf' }
+                ]
+            },
+            'ABC Ginto': {
+                variants: [
+                    { name: 'Hairline', weight: '100', style: 'normal', path: 'Fonts/ABCGinto-Hairline-Trial.otf' },
+                    { name: 'Hairline Italic', weight: '100', style: 'italic', path: 'Fonts/ABCGinto-HairlineItalic-Trial.otf' },
+                    { name: 'Thin', weight: '200', style: 'normal', path: 'Fonts/ABCGinto-Thin-Trial.otf' },
+                    { name: 'Thin Italic', weight: '200', style: 'italic', path: 'Fonts/ABCGinto-ThinItalic-Trial.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/ABCGinto-Light-Trial.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/ABCGinto-LightItalic-Trial.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/ABCGinto-Regular-Trial.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGinto-RegularItalic-Trial.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/ABCGinto-Medium-Trial.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/ABCGinto-MediumItalic-Trial.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/ABCGinto-Bold-Trial.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/ABCGinto-BoldItalic-Trial.otf' },
+                    { name: 'Black', weight: '900', style: 'normal', path: 'Fonts/ABCGinto-Black-Trial.otf' },
+                    { name: 'Black Italic', weight: '900', style: 'italic', path: 'Fonts/ABCGinto-BlackItalic-Trial.otf' },
+                    { name: 'Ultra', weight: '950', style: 'normal', path: 'Fonts/ABCGinto-Ultra-Trial.otf' },
+                    { name: 'Ultra Italic', weight: '950', style: 'italic', path: 'Fonts/ABCGinto-UltraItalic-Trial.otf' }
+                ]
+            },
+            'ABC Monument Grotesk': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Thin-Trial.otf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-ThinItalic-Trial.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Light-Trial.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-LightItalic-Trial.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Regular-Trial.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-RegularItalic-Trial.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Medium-Trial.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-MediumItalic-Trial.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Bold-Trial.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-BoldItalic-Trial.otf' },
+                    { name: 'Heavy', weight: '800', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Heavy-Trial.otf' },
+                    { name: 'Heavy Italic', weight: '800', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-HeavyItalic-Trial.otf' },
+                    { name: 'Black', weight: '900', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Black-Trial.otf' },
+                    { name: 'Black Italic', weight: '900', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-BlackItalic-Trial.otf' },
+                    { name: 'Ultra', weight: '950', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Ultra-Trial.otf' },
+                    { name: 'Ultra Italic', weight: '950', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-UltraItalic-Trial.otf' }
+                ]
+            },
+            'G2 Airdancer': {
+                variants: [
+                    { name: 'Compressed', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Compressed/G2Airdancer-Compressed.otf' },
+                    { name: 'Compressed Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Compressed Round/G2Airdancer-CompressedRound.otf' },
+                    { name: 'Compressed Semi-Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Compressed Semi-Round/G2Airdancer-CompressedSemi-Round.otf' },
+                    { name: 'Condensed', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Condensed/G2AirdancerCondesed-Regular.otf' },
+                    { name: 'Condensed Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Condensed Round/G2Airdancer-CondensedRound.otf' },
+                    { name: 'Condensed Semi Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Condensed Semi Round/G2Airdancer-Regular.otf' },
+                    { name: 'Expanded', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Expanded/G2Airdancer-Expanded.otf' },
+                    { name: 'Expanded Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Expanded Round/G2Airdancer-ExpandedRound.otf' },
+                    { name: 'Expanded Semi-Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Expanded Semi-Round/G2Airdancer-ExpandedSemiRound.otf' },
+                    { name: 'Extended', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Extended/G2Airdancer-Extended.otf' },
+                    { name: 'Extended Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Extended Round/G2Airdancer-ExtendedRound.otf' },
+                    { name: 'Extended Semi-Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Extended Semi-Round/G2Airdancer-ExtendedSemiRound.otf' },
+                    { name: 'Normal', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Normal/G2Airdancer-Normal.otf' },
+                    { name: 'Normal Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Normal Round/G2Airdancer-NormalRound.otf' },
+                    { name: 'Normal Semi-Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Normal Semi-Round/G2Airdancer-NormalSemiRound.otf' },
+                    { name: 'Ultra Expanded', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Ultra Expanded/G2Airdancer-UltraExpanded.otf' },
+                    { name: 'Ultra Expanded Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Ultra Expanded Round/G2Airdancer-UltraExpandedRound.otf' },
+                    { name: 'Ultra Expanded Semi Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Ultra Expanded Semi Round/G2Airdancer-UltraExpandedSemiRound.otf' }
+                ]
+            },
+            'G2 Ciao': {
+                variants: [
+                    { name: 'Sharp Sharp', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Sharp/G2Ciao-SharpSharp.otf' },
+                    { name: 'Sharp Sharp Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Sharp Swift/G2Ciao-SharpSharpSwift.otf' },
+                    { name: 'Sharp Silent', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Silent/G2Ciao-SharpSilent.otf' },
+                    { name: 'Sharp Silent Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Silent Swift/G2Ciao-SharpSilentSwift.otf' },
+                    { name: 'Sharp Strong', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Strong/G2Ciao-StrongSharp.otf' },
+                    { name: 'Sharp Strong Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Strong Swift/G2Ciao-StrongSharpSwift.otf' },
+                    { name: 'Silent Sharp', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Sharp/G2Ciao-SilentSharp.otf' },
+                    { name: 'Silent Sharp Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Sharp Swift/G2Ciao-SilentSharpSwift.otf' },
+                    { name: 'Silent Silent', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Silent/G2Ciao-SilentSilent.otf' },
+                    { name: 'Silent Silent Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Silent Swift/G2Ciao-SilentSilentSwift.otf' },
+                    { name: 'Silent Strong', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Strong/G2Ciao-SilentStrong.otf' },
+                    { name: 'Silent Strong Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Strong Swift/G2Ciao-SilentStrongSwift.otf' },
+                    { name: 'Strong Sharp', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Sharp/G2Ciao-StrongSharp.otf' },
+                    { name: 'Strong Sharp Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Sharp Swift/G2Ciao-StrongSharpSwift.otf' },
+                    { name: 'Strong Silent', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Silent/G2Ciao-StrongSilent.otf' },
+                    { name: 'Strong Silent Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Silent Swift/G2Ciao-StrongSilentSwift.otf' },
+                    { name: 'Strong Strong', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Strong/G2Ciao-StrongStrong.otf' },
+                    { name: 'Strong Strong Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Strong Swift/G2Ciao-StrongStrongSwift.otf' }
+                ]
+            },
+            'G2 Erika': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-Thin.otf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-ThinItalic.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-Light.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-LightItalic.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-Regular.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-RegularItalic.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-Medium.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-MediumItalic.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-Bold.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/G2Erika-BoldItalic.otf' }
+                ]
+            },
+            'G2 Erika Mono': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-Thin.otf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-ThinItalic.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-Light.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-LightItalic.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-Regular.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-RegularItalic.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-Medium.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-MediumItalic.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-Bold.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2ErikaMono-BoldItalic.otf' }
+                ]
+            },
+            'G2 Kosmos': {
+                variants: [
+                    { name: 'Extended', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Kosmos/G2 Kosmos Extended/G2Kosmos-Extended.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Kosmos/G2 Kosmos Regular/G2Kosmos-Regular.otf' }
+                ]
+            },
+            'G2 TGR': {
+                variants: [
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Bold/G2TGR-Bold.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Bold Italic/G2TGR-BoldItalic.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Light/G2TGR-Light.ttf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Light Italic/G2TGR-LightItalic.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Medium/G2TGR-Medium.ttf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Medium Italic/G2TGR-MediumItalic.otf' },
+                    { name: 'Mono', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Mono/G2TGR-Mono.ttf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Regular/G2TGR-Regular.ttf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Regular Italic/G2TGR-RegularItalic.otf' }
+                ]
+            },
+            'DRKrapkaRound': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Thin.ttf' },
+                    { name: 'Thin Oblique', weight: '100', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ThinObl.ttf' },
+                    { name: 'Thin Upward Oblique', weight: '100', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ThinUpObl.ttf' },
+                    { name: 'ExtraLight', weight: '200', style: 'normal', path: 'Fonts/font/DRKrapkaRound-ExtraLight.ttf' },
+                    { name: 'ExtraLight Oblique', weight: '200', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ExtraLightObl.ttf' },
+                    { name: 'ExtraLight Upward Oblique', weight: '200', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ExtraLightUpObl.ttf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Light.ttf' },
+                    { name: 'Light Oblique', weight: '300', style: 'italic', path: 'Fonts/font/DRKrapkaRound-LightObl.ttf' },
+                    { name: 'Light Upward Oblique', weight: '300', style: 'italic', path: 'Fonts/font/DRKrapkaRound-LightUpObl.ttf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Regular.ttf' },
+                    { name: 'Regular Oblique', weight: '400', style: 'italic', path: 'Fonts/font/DRKrapkaRound-RegularObl.ttf' },
+                    { name: 'Regular Upward Oblique', weight: '400', style: 'italic', path: 'Fonts/font/DRKrapkaRound-RegularUpObl.ttf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Medium.ttf' },
+                    { name: 'Medium Oblique', weight: '500', style: 'italic', path: 'Fonts/font/DRKrapkaRound-MediumObl.ttf' },
+                    { name: 'Medium Upward Oblique', weight: '500', style: 'italic', path: 'Fonts/font/DRKrapkaRound-MediumUpObl.ttf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Bold.ttf' },
+                    { name: 'Bold Oblique', weight: '700', style: 'italic', path: 'Fonts/font/DRKrapkaRound-BoldObl.ttf' },
+                    { name: 'Bold Upward Oblique', weight: '700', style: 'italic', path: 'Fonts/font/DRKrapkaRound-BoldUpObl.ttf' },
+                    { name: 'ExtraBold', weight: '800', style: 'normal', path: 'Fonts/font/DRKrapkaRound-ExtraBold.ttf' },
+                    { name: 'ExtraBold Oblique', weight: '800', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ExtraBoldObl.ttf' },
+                    { name: 'ExtraBold Upward Oblique', weight: '800', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ExtraBoldUpObl.ttf' }
+                ]
+            }
+        };
+
+        // Function to load font dynamically
+        function loadFontVariant(fontFamily, variant) {
+            const fontName = `${fontFamily} ${variant.name}`;
+            const fontId = `font-${fontName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}`;
+            const existingStyle = document.getElementById(fontId);
+            if (existingStyle) return; // Font already loaded
+
+            const style = document.createElement('style');
+            style.id = fontId;
+            
+            let fontSrc = '';
+            if (variant.path.endsWith('.otf')) {
+                fontSrc = `url('${variant.path}') format('opentype')`;
+            } else if (variant.path.endsWith('.ttf')) {
+                fontSrc = `url('${variant.path}') format('truetype')`;
+            } else {
+                // For ABC Arizona fonts, use woff2, woff, otf
+                fontSrc = `url('${variant.path}.woff2') format('woff2'), url('${variant.path}.woff') format('woff'), url('${variant.path}.otf') format('opentype')`;
+            }
+
+            style.textContent = `
+                @font-face {
+                    font-family: '${fontName}';
+                    src: ${fontSrc};
+                    font-weight: ${variant.weight};
+                    font-style: ${variant.style};
+                    font-display: swap;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Type Font Selector
+        const typeButton = document.getElementById('typeButton');
+        const typeFontSelectorOverlay = document.getElementById('typeFontSelectorOverlay');
+        const typeFontSelectorContent = document.getElementById('typeFontSelectorContent');
+        const closeTypeFontSelector = document.getElementById('closeTypeFontSelector');
+        const typeFontVariantsOverlay = document.getElementById('typeFontVariantsOverlay');
+        const typeFontVariantsContent = document.getElementById('typeFontVariantsContent');
+        const typeFontVariantsTitle = document.getElementById('typeFontVariantsTitle');
+        const closeTypeFontVariants = document.getElementById('closeTypeFontVariants');
+
+        // Function to render type font selector
+        function renderTypeFontSelector() {
+            typeFontSelectorContent.innerHTML = '';
+            
+            for (const fontFamily of Object.keys(fontFamilies)) {
+                const family = fontFamilies[fontFamily];
+                if (!family || !family.variants || family.variants.length === 0) continue;
+                
+                const fontItem = document.createElement('div');
+                fontItem.className = 'type-font-item';
+                if (family.variants.length > 1) {
+                    fontItem.classList.add('has-variants');
+                }
+                
+                // Load first variant for preview
+                const firstVariant = family.variants[0];
+                loadFontVariant(fontFamily, firstVariant);
+                
+                const previewFontName = `${fontFamily} ${firstVariant.name}`;
+                // Set font family for display (name in its own font)
+                fontItem.style.fontFamily = `'${previewFontName}'`;
+                fontItem.textContent = fontFamily;
+                
+                fontItem.addEventListener('click', () => {
+                    if (family.variants.length > 1) {
+                        // Open variants window
+                        showFontVariants(fontFamily);
+                    } else {
+                        // Apply single variant directly
+                        applyFontVariant(fontFamily, firstVariant);
+                        typeFontSelectorOverlay.classList.remove('active');
+                    }
+                });
+                
+                typeFontSelectorContent.appendChild(fontItem);
+            }
+        }
+
+        // Function to show font variants
+        function showFontVariants(fontFamily) {
+            typeFontVariantsTitle.textContent = fontFamily;
+            typeFontVariantsContent.innerHTML = '';
+            
+            const family = fontFamilies[fontFamily];
+            if (!family || !family.variants) return;
+
+            for (const variant of family.variants) {
+                const variantItem = document.createElement('div');
+                variantItem.className = 'type-font-variant-item';
+                
+                // Load font variant
+                loadFontVariant(fontFamily, variant);
+                
+                const fontName = `${fontFamily} ${variant.name}`;
+                // Set font family for display (variant name in its own font)
+                variantItem.style.fontFamily = `'${fontName}'`;
+                variantItem.style.fontWeight = variant.weight;
+                variantItem.style.fontStyle = variant.style;
+                variantItem.textContent = variant.name;
+                
+                // Check if this is the current font
+                if (sentenceFont === fontFamily && 
+                    sentenceFontWeight === variant.weight && 
+                    sentenceFontStyle === variant.style) {
+                    variantItem.classList.add('active');
+                }
+                
+                variantItem.addEventListener('click', () => {
+                    applyFontVariant(fontFamily, variant);
+                    typeFontVariantsOverlay.classList.remove('active');
+                    typeFontSelectorOverlay.classList.remove('active');
+                });
+                
+                typeFontVariantsContent.appendChild(variantItem);
+            }
+            
+            typeFontVariantsOverlay.classList.add('active');
+        }
+
+        // Function to apply font variant
+        function applyFontVariant(fontFamily, variant) {
+            loadFontVariant(fontFamily, variant);
+            
+            const fontName = `${fontFamily} ${variant.name}`;
+            sentenceFont = fontFamily;
+            sentenceFontWeight = variant.weight;
+            sentenceFontStyle = variant.style;
+            sentenceFontName = fontName;
+            
+            // Update font for all words in the main text
+            const wordElements = textContent.querySelectorAll('.word');
+            wordElements.forEach(wordElement => {
+                wordElement.style.fontFamily = `'${fontName}'`;
+                wordElement.style.fontWeight = variant.weight;
+                wordElement.style.fontStyle = variant.style;
+            });
+        }
+
+        // Type button event listener
+        typeButton.addEventListener('click', () => {
+            const isActive = typeFontSelectorOverlay.classList.contains('active');
+            if (isActive) {
+                typeFontSelectorOverlay.classList.remove('active');
+            } else {
+                renderTypeFontSelector();
+                typeFontSelectorOverlay.classList.add('active');
+            }
+        });
+
+        // Close buttons
+        closeTypeFontSelector.addEventListener('click', () => {
+            typeFontSelectorOverlay.classList.remove('active');
+        });
+
+        closeTypeFontVariants.addEventListener('click', () => {
+            typeFontVariantsOverlay.classList.remove('active');
+        });
+
+        // Close on overlay click (only for variants overlay)
+        typeFontVariantsOverlay.addEventListener('click', (e) => {
+            if (e.target === typeFontVariantsOverlay) {
+                typeFontVariantsOverlay.classList.remove('active');
+            }
+        });
+
+        // Save as JPEG button
+        const saveJpegBtn = document.getElementById('saveJpegBtn');
+        saveJpegBtn.addEventListener('click', async () => {
+            try {
+                const padding = 50; // 50px padding on all sides
+
+                // Get the actual size of the text content element
+                const rect = textContent.getBoundingClientRect();
+                const elementWidth = textContent.scrollWidth || rect.width;
+                const elementHeight = textContent.scrollHeight || rect.height;
+
+                // Capture the text content with html2canvas at its actual size
+                const canvas = await html2canvas(textContent, {
+                    backgroundColor: '#ffffff',
+                    scale: 2, // Higher quality
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: false,
+                    width: elementWidth,
+                    height: elementHeight,
+                    x: 0,
+                    y: 0,
+                    windowWidth: elementWidth,
+                    windowHeight: elementHeight
+                });
+
+                // Create a new canvas with padding (50px on all sides)
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = canvas.width + (padding * 2);
+                finalCanvas.height = canvas.height + (padding * 2);
+                const finalCtx = finalCanvas.getContext('2d');
+
+                // Fill with white background
+                finalCtx.fillStyle = '#ffffff';
+                finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+                // Draw the captured content with 50px padding from all edges
+                finalCtx.drawImage(canvas, padding, padding, canvas.width, canvas.height);
+
+                // Convert to JPEG and download
+                const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.95);
+                const link = document.createElement('a');
+                // Dateiname basierend auf HTML-Dateiname
+                const baseFileName = window.location.pathname.split('/').pop().replace('.html', '').toUpperCase();
+                link.download = baseFileName + '.jpg';
+                link.href = dataUrl;
+                link.click();
+            } catch (error) {
+                console.error('Error saving JPEG:', error);
+                alert('Fehler beim Speichern des JPEGs. Bitte versuchen Sie es erneut.');
+            }
+        });
+
+        // Video Recording Functionality
+        const recordVideoBtn = document.getElementById('recordVideoBtn');
+        let isRecording = false;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordingCanvas = null;
+        let recordingCtx = null;
+        let recordingStream = null;
+        let audioContext = null;
+        let audioDestination = null;
+        let audioSourceNode = null;
+        let recordingAnimationFrame = null;
+        let recordingStartTime = null;
+        const RECORDING_DURATION = 5000; // 5 seconds
+
+        // Function to draw text content directly to canvas
+        function drawTextToCanvas(ctx, width, height) {
+            // Clear with white background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Get container position
+            const containerRect = textContent.getBoundingClientRect();
+            const wordElements = textContent.querySelectorAll('.word');
+            
+            wordElements.forEach(wordEl => {
+                const wordRect = wordEl.getBoundingClientRect();
+                const x = wordRect.left - containerRect.left;
+                const y = wordRect.top - containerRect.top;
+                
+                const styles = window.getComputedStyle(wordEl);
+                ctx.save();
+                
+                // Apply transform
+                const transform = styles.transform;
+                if (transform && transform !== 'none') {
+                    const matrix = transform.match(/matrix\(([^)]+)\)/);
+                    if (matrix) {
+                        const values = matrix[1].split(',').map(v => parseFloat(v.trim()));
+                        if (values.length === 6) {
+                            ctx.setTransform(values[0], values[1], values[2], values[3], 
+                                           x + values[4], y + values[5]);
+                        } else {
+                            ctx.translate(x, y);
+                        }
+                    } else {
+                        ctx.translate(x, y);
+                    }
+                } else {
+                    ctx.translate(x, y);
+                }
+                
+                // Set font
+                ctx.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+                ctx.fillStyle = styles.color;
+                ctx.textBaseline = 'top';
+                
+                // Draw text
+                ctx.fillText(wordEl.textContent, 0, 0);
+                ctx.restore();
+            });
+        }
+
+        recordVideoBtn.addEventListener('click', async () => {
+            if (!isAnimated) {
+                alert('Bitte starten Sie zuerst die Animation mit "NOW DANCE"!');
+                return;
+            }
+
+            if (isRecording) {
+                // Stop recording
+                if (recordingAnimationFrame) {
+                    cancelAnimationFrame(recordingAnimationFrame);
+                    recordingAnimationFrame = null;
+                }
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+                recordVideoBtn.textContent = 'Record Video (5s)';
+                recordVideoBtn.disabled = false;
+                isRecording = false;
+                return;
+            }
+
+            try {
+                // Check if animation is running
+                if (!isAnimated) {
+                    alert('Bitte starten Sie zuerst die Animation mit "NOW DANCE"!');
+                    return;
+                }
+
+                // Get the text container dimensions
+                const textContainerRect = textContent.getBoundingClientRect();
+                const width = Math.max(800, Math.floor(textContainerRect.width));
+                const height = Math.max(600, Math.floor(textContainerRect.height));
+
+                // Create canvas for recording
+                recordingCanvas = document.createElement('canvas');
+                recordingCanvas.width = width;
+                recordingCanvas.height = height;
+                recordingCtx = recordingCanvas.getContext('2d');
+
+                // Capture canvas as video stream with higher FPS for smoother playback
+                recordingStream = recordingCanvas.captureStream(60); // 60 FPS for smoother video
+
+                // Try to capture audio if available
+                let combinedStream = recordingStream;
+                if (currentlyPlaying !== null && audioFiles[currentlyPlaying]) {
+                    try {
+                        const audioElement = audioFiles[currentlyPlaying];
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        audioDestination = audioContext.createMediaStreamDestination();
+                        
+                        audioSourceNode = audioContext.createMediaElementSource(audioElement);
+                        audioSourceNode.connect(audioDestination);
+                        audioSourceNode.connect(audioContext.destination);
+                        
+                        const audioTracks = audioDestination.stream.getAudioTracks();
+                        const videoTracks = recordingStream.getVideoTracks();
+                        if (audioTracks.length > 0 && videoTracks.length > 0) {
+                            combinedStream = new MediaStream([...videoTracks, ...audioTracks]);
+                        }
+                    } catch (error) {
+                        console.warn('Audio capture not available, recording video only:', error);
+                    }
+                }
+
+                // Create MediaRecorder with proper codec detection - try MP4 first, then WebM
+                const codecs = [
+                    'video/mp4;codecs=h264,aac',
+                    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+                    'video/mp4',
+                    'video/webm;codecs=vp9,opus',
+                    'video/webm;codecs=vp8,opus',
+                    'video/webm;codecs=vp9',
+                    'video/webm;codecs=vp8',
+                    'video/webm'
+                ];
+
+                let selectedMimeType = 'video/webm';
+                let fileExtension = 'webm';
+                for (const codec of codecs) {
+                    if (MediaRecorder.isTypeSupported(codec)) {
+                        selectedMimeType = codec;
+                        if (codec.includes('mp4')) {
+                            fileExtension = 'mp4';
+                        }
+                        break;
+                    }
+                }
+
+                const options = {
+                    mimeType: selectedMimeType,
+                    videoBitsPerSecond: 5000000 // Higher bitrate for better quality
+                };
+
+                try {
+                    mediaRecorder = new MediaRecorder(combinedStream, options);
+                } catch (error) {
+                    console.warn('Error creating MediaRecorder with options, using default:', error);
+                    mediaRecorder = new MediaRecorder(combinedStream);
+                }
+
+                recordedChunks = [];
+                const finalFileExtension = fileExtension; // Store for use in onstop
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onerror = (event) => {
+                    console.error('MediaRecorder error:', event.error);
+                };
+
+                mediaRecorder.onstop = () => {
+                    try {
+                        if (recordedChunks.length === 0) {
+                            alert('Keine Daten aufgenommen. Bitte versuchen Sie es erneut.');
+                            cleanup();
+                            return;
+                        }
+
+                        const blob = new Blob(recordedChunks, { type: selectedMimeType });
+                        
+                        if (blob.size === 0) {
+                            alert('Die Aufnahme ist leer. Bitte versuchen Sie es erneut.');
+                            cleanup();
+                            return;
+                        }
+
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        // Dateiname basierend auf HTML-Dateiname
+                        const baseFileName = window.location.pathname.split('/').pop().replace('.html', '').toUpperCase();
+                        link.download = `${baseFileName}.${finalFileExtension}`;
+                        link.href = url;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        setTimeout(() => {
+                            URL.revokeObjectURL(url);
+                        }, 100);
+                    } catch (error) {
+                        console.error('Error in onstop:', error);
+                        alert('Fehler beim Speichern des Videos: ' + error.message);
+                    } finally {
+                        cleanup();
+                    }
+                };
+
+                function cleanup() {
+                    if (recordingAnimationFrame) {
+                        cancelAnimationFrame(recordingAnimationFrame);
+                        recordingAnimationFrame = null;
+                    }
+                    if (recordingStream) {
+                        recordingStream.getTracks().forEach(track => track.stop());
+                    }
+                    if (audioSourceNode) {
+                        try {
+                            audioSourceNode.disconnect();
+                        } catch (e) {}
+                    }
+                    if (audioDestination) {
+                        try {
+                            audioDestination.disconnect();
+                        } catch (e) {}
+                    }
+                    if (audioContext && audioContext.state !== 'closed') {
+                        audioContext.close().catch(() => {});
+                    }
+                    recordingCanvas = null;
+                    recordingCtx = null;
+                    recordingStream = null;
+                    audioContext = null;
+                    audioDestination = null;
+                    audioSourceNode = null;
+                }
+
+                // Start recording
+                mediaRecorder.start(100); // Request data every 100ms
+                isRecording = true;
+                recordingStartTime = Date.now();
+                recordVideoBtn.textContent = 'Recording... (5s)';
+                recordVideoBtn.disabled = true;
+
+                // Recording loop using requestAnimationFrame
+                function recordFrame() {
+                    if (!isRecording) {
+                        return;
+                    }
+
+                    const elapsed = Date.now() - recordingStartTime;
+                    
+                    if (elapsed >= RECORDING_DURATION) {
+                        if (mediaRecorder && mediaRecorder.state === 'recording') {
+                            mediaRecorder.stop();
+                        }
+                        isRecording = false;
+                        recordVideoBtn.textContent = 'Record Video (5s)';
+                        recordVideoBtn.disabled = false;
+                        return;
+                    }
+
+                    // Draw current frame directly to canvas
+                    try {
+                        drawTextToCanvas(recordingCtx, width, height);
+                    } catch (error) {
+                        console.error('Error drawing frame:', error);
+                    }
+
+                    // Continue recording
+                    recordingAnimationFrame = requestAnimationFrame(recordFrame);
+                }
+
+                // Start recording frames
+                recordFrame();
+
+            } catch (error) {
+                console.error('Error starting video recording:', error);
+                alert('Fehler beim Starten der Videoaufnahme. Bitte versuchen Sie es erneut.');
+                isRecording = false;
+                recordVideoBtn.textContent = 'Record Video (5s)';
+                recordVideoBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+

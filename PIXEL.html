@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Techno4 - 6x16 Grid</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'DEM-MO typeface';
+            src: url('DEM-MO typeface/Proportional/DEM-MO-400.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'DEM-MOMono-300';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-300.otf') format('opentype');
+            font-weight: 300;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'DEM-MOMono-400';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-400.otf') format('opentype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root{
+            --rows: 6;
+            --cols: 16;
+            --cell-width: 48px; /* rectangular: wider than high */
+            --cell-height: 24px;
+            --gap: 2px; /* gap will show container background (black) as grid lines */
+        }
+        html,body{
+            margin:0;
+            padding:0;
+            min-height:100%;
+        }
+
+        /* Info Button */
+        .info-button {
+            position: fixed;
+            top: 40px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 0;
+            font-family: 'DEM-MO typeface', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .info-button:hover {
+            background-color: #333333;
+        }
+
+        /* Home Button */
+        .home-button {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 0;
+            font-family: 'DEM-MO typeface', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .home-button:hover {
+            background-color: #333333;
+        }
+
+        /* Floating Info Window */
+        .info-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .info-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .info-window {
+            background-color: #ffffff;
+            width: 80%;
+            max-width: 780px;
+            max-height: 90vh;
+            position: relative;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            font-family: 'DEM-MOMono-400', monospace;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .info-window p {
+            font-family: 'DEM-MOMono-400', monospace;
+            line-height: 1.6;
+        }
+
+        .info-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background-color: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .info-close:hover {
+            color: #666666;
+        }
+        body{
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            display:flex;
+            flex-direction: column;
+            align-items:center;
+            justify-content:flex-start;
+            padding: 40px 20px;
+            background:#fff;
+            min-height: 100vh;
+        }
+        
+        .page{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 60px;
+            width: 100%;
+            max-width: 100%;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        .grid-wrapper{
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            position: relative;
+        }
+        .grid-container{
+            display:grid;
+            grid-template-columns: repeat(var(--cols), var(--cell-width));
+            grid-auto-rows: var(--cell-height);
+            gap: var(--gap);
+            background:#000; /* grid lines color */
+            padding: var(--gap);
+            border: 2px solid #000;
+            user-select: none;
+            touch-action: none;
+            margin-bottom: 10px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .grid-container.inverted {
+            background: #fff;
+            border-color: #fff;
+        }
+
+        .cell{
+            width: var(--cell-width);
+            height: var(--cell-height);
+            background: #fff; /* default white */
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+            box-sizing: border-box;
+            transition: background-color 0.3s;
+        }
+
+        .cell.active{
+            background:#000; /* black when active */
+        }
+
+        .grid-container.inverted .cell {
+            background: #000;
+        }
+
+        .grid-container.inverted .cell.active {
+            background: #fff;
+        }
+        }
+
+        /* small visual on hover to show interactive */
+        .cell:hover{outline: 1px solid rgba(0,0,0,0.1)}
+        
+        .controls{
+            position: fixed;
+            top: 40px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .pdf-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            cursor: pointer;
+            transition: opacity 0.3s ease-out;
+            pointer-events: auto;
+        }
+        
+        .pdf-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .pdf-overlay img {
+            display: block;
+            width: 806px; /* Genau so breit wie ein Grid: 16 * 48 + 17 * 2 + 2 * 2 = 806px */
+            height: 708px; /* Genau so hoch wie alle 4 Grids: 4 * 162 + 3 * 20 = 708px */
+            object-fit: cover;
+        }
+        
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .controls-spacer {
+            height: 30px;
+        }
+        
+        .btn{
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 2px solid #000;
+            background: #fff;
+            cursor: pointer;
+            font-family: 'DEM-MO typeface', monospace;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover{
+            background: #000;
+            color: #fff;
+        }
+        
+        .icon-btn{
+            width: 40px;
+            height: 40px;
+            padding: 8px;
+            border: 2px solid #000;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+            transition: all 0.2s;
+            font-size: 20px;
+        }
+        
+        .icon-btn:hover{
+            background: #000;
+            color: #fff;
+        }
+        
+        .thumbnail-container{
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            margin-top: 60px;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center; /* Zentriert die Reihen */
+        }
+        
+        .thumbnail-container h2 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        #folderIconBtn {
+            margin-bottom: 10px;
+        }
+        
+        .thumbnail-row{
+            display: flex;
+            gap: 10px;
+            flex-wrap: nowrap; /* Kein automatischer Umbruch */
+            justify-content: center; /* Zentriert die Items in der Reihe */
+            width: 100%;
+        }
+        
+        .thumbnail-item{
+            width: 200px; /* Viel kleiner */
+            height: 175px; /* Proportional kleiner (200/806 * 708 ≈ 175) */
+            border: none; /* Rahmen entfernt */
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            cursor: grab;
+            overflow: hidden;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .thumbnail-item:active {
+            cursor: grabbing;
+        }
+        
+        .thumbnail-item.dragging {
+            opacity: 0.5;
+        }
+        
+        .thumbnail-item.selected{
+            border: 3px solid #ff0000;
+            background: #fff5f5;
+        }
+        
+        .thumbnail-item img{
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        
+        .grid-wrapper.drag-over {
+            outline: 3px dashed #000;
+            outline-offset: 5px;
+        }
+        
+        .thumbnail-row.drag-over {
+            outline: 2px dashed #000;
+            outline-offset: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Info Button -->
+    <button class="info-button" id="infoButton">i</button>
+    
+    <!-- Home Button -->
+    <a href="TECHNOTOOLS.html" class="home-button" id="homeButton">⌂</a>
+
+    <!-- Info Floating Window -->
+    <div class="info-overlay" id="infoOverlay">
+        <div class="info-window">
+            <button class="info-close" id="infoClose">×</button>
+            <p>This interactive website turns rhythm into drawing. Use a beat sequencer to sketch your own illustrations in real time. You can save them in white or black mode, keep and collect them on the website, and drag your saved illustrations back onto the canvas to remix and build new visuals.</p>
+        </div>
+    </div>
+    <div class="page">
+        <div class="grid-wrapper" id="grids">
+            <div class="pdf-overlay" id="pdfOverlay">
+                <img src="draw.jpeg" alt="Draw" />
+            </div>
+        </div>
+        
+        <div class="thumbnail-container" id="thumbnailContainer">
+            <button class="icon-btn" id="folderIconBtn" title="Speicherort auswählen">📁</button>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <div class="controls-section" id="drawSection">
+            <button class="btn" id="eraseBtn">erase <span style="font-size: 11px; opacity: 0.7;">cmd + z</span></button>
+            <button class="btn" id="resetGridBtn">Reset All</button>
+            <button class="btn" id="blackModeBtn">Black Mode</button>
+            <button class="btn" id="whiteModeBtn" style="display: none;">White Mode</button>
+        </div>
+        <div class="controls-spacer"></div>
+        <div class="controls-section" id="saveSection">
+            <button class="btn" id="saveThumbnailBtn">Hold Grid</button>
+            <button class="btn" id="saveJpegBtn">Save as JPEG</button>
+            <button class="btn" id="savePdfBtn">Save as PDF</button>
+        </div>
+        <button class="btn" id="saveSelectedPdfBtn" style="display: none;">Save Selected as PDF</button>
+        <button class="btn" id="saveSelectedJpegBtn" style="display: none;">Save selected Grids as jpeg</button>
+    </div>
+
+    <script>
+        // Radiergummi-Modus (global - muss vor dem IIFE definiert werden)
+        let eraserMode = false;
+        let isBlackMode = false; // Flag für invertierten Modus
+        
+        // Funktion zum Umschalten des Black-Modus (Farbinvertierung)
+        function toggleBlackMode() {
+            isBlackMode = true;
+            updateModeButtons();
+            applyModeColors();
+            hideOtherButtons();
+        }
+        
+        // Funktion zum Umschalten des White-Modus (zurück zu Original)
+        function toggleWhiteMode() {
+            isBlackMode = false;
+            updateModeButtons();
+            applyModeColors();
+            showOtherButtons();
+        }
+        
+        // Funktion zum Aktualisieren der Sichtbarkeit der Mode-Buttons
+        function updateModeButtons() {
+            const blackBtn = document.getElementById('blackModeBtn');
+            const whiteBtn = document.getElementById('whiteModeBtn');
+            if (isBlackMode) {
+                if (blackBtn) blackBtn.style.display = 'none';
+                if (whiteBtn) whiteBtn.style.display = 'inline-block';
+            } else {
+                if (blackBtn) blackBtn.style.display = 'inline-block';
+                if (whiteBtn) whiteBtn.style.display = 'none';
+            }
+        }
+        
+        // Funktion zum Verstecken der anderen Buttons im Black Mode
+        function hideOtherButtons() {
+            const saveSection = document.getElementById('saveSection');
+            if (saveSection) {
+                saveSection.style.display = 'none';
+            }
+        }
+        
+        // Funktion zum Anzeigen der anderen Buttons im White Mode
+        function showOtherButtons() {
+            const saveSection = document.getElementById('saveSection');
+            if (saveSection) {
+                saveSection.style.display = 'flex';
+            }
+        }
+        
+        // Funktion zum Anwenden der Farben basierend auf Modus (nur Schwarz/Weiß)
+        function applyModeColors() {
+            // Alle Grid-Container umschalten - CSS-Klasse .inverted sorgt für die Invertierung
+            const gridContainers = document.querySelectorAll('.grid-container');
+            gridContainers.forEach(container => {
+                if (isBlackMode) {
+                    container.classList.add('inverted');
+                } else {
+                    container.classList.remove('inverted');
+                }
+            });
+            
+            // Die Zellen behalten ihren active-Status, die CSS-Klassen sorgen für die richtige Darstellung:
+            // - Normal: .cell = weiß, .cell.active = schwarz
+            // - Inverted: .cell = schwarz, .cell.active = weiß
+            // Keine manuelle Manipulation der Zellen-Farben nötig
+        }
+        
+        (function(){
+            const rows = 6;
+            const cols = 16;
+            const numGrids = 4;
+            const gridsWrapper = document.getElementById('grids');
+            
+            // Kästen, die von Anfang an schwarz sein sollen
+            // Reihen werden global über alle 4 Grids nummeriert (0-23)
+            // Grid 0: Reihen 0-5 (1-6), Grid 1: Reihen 6-11 (7-12), Grid 2: Reihen 12-17 (13-18), Grid 3: Reihen 18-23 (19-24)
+            function getGridAndRow(globalRow) {
+                const grid = Math.floor(globalRow / rows);
+                const row = globalRow % rows;
+                return { grid, row };
+            }
+            
+            function shouldBeInitialBlack(globalRow, col) {
+                // Reihe 2 (Index 1): Spalten 2,3,4,5,6,9,10,11,12,13,14 (Index 1,2,3,4,5,8,9,10,11,12,13)
+                if (globalRow === 1) {
+                    return [1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13].includes(col);
+                }
+                
+                // Reihen 3,4,5,6,7,8,9,10,11 (Index 2-10): Spalten 2,3,7,9,10,15 (Index 1,2,6,8,9,14)
+                if (globalRow >= 2 && globalRow <= 10) {
+                    const baseCols = [1, 2, 6, 8, 9, 14];
+                    // Reihe 8 (Index 7) zusätzlich: Spalten 11,12,13,14 (Index 10,11,12,13)
+                    if (globalRow === 7) {
+                        return baseCols.includes(col) || [10, 11, 12, 13].includes(col);
+                    }
+                    return baseCols.includes(col);
+                }
+                
+                // Reihe 12 (Index 11): Spalten 2,3,4,5,6,9,10,15 (Index 1,2,3,4,5,8,9,14) - Kasten 15 statt 16
+                if (globalRow === 11) {
+                    return [1, 2, 3, 4, 5, 8, 9, 14].includes(col);
+                }
+                
+                // Reihe 14 (Index 13): Spalten 2,3,4,5,6,9,10,15 (Index 1,2,3,4,5,8,9,14)
+                if (globalRow === 13) {
+                    return [1, 2, 3, 4, 5, 8, 9, 14].includes(col);
+                }
+                
+                // Reihen 15-24 (Index 14-23): Spalten 2,3,7,9,10,15 (Index 1,2,6,8,9,14)
+                if (globalRow >= 14 && globalRow <= 23) {
+                    const baseCols = [1, 2, 6, 8, 9, 14];
+                    // Reihe 20 (Index 19) zusätzlich: Spalten 4,5,6 (Index 3,4,5)
+                    if (globalRow === 19) {
+                        return baseCols.includes(col) || [3, 4, 5].includes(col);
+                    }
+                    // Reihe 22 (Index 21) zusätzlich: Spalten 12,13 (Index 11,12)
+                    if (globalRow === 21) {
+                        return baseCols.includes(col) || [11, 12].includes(col);
+                    }
+                    // Reihen 23 und 24 (Index 22 und 23) zusätzlich: Spalten 11,14 (Index 10,13)
+                    if (globalRow === 22 || globalRow === 23) {
+                        return baseCols.includes(col) || [10, 13].includes(col);
+                    }
+                    return baseCols.includes(col);
+                }
+                
+                return false;
+            }
+            
+            let initialBlackCleared = false; // Flag, ob die initialen schwarzen Kästen bereits entfernt wurden
+            window.infoWindowClosed = false; // Flag, ob das Info-Fenster bereits geschlossen wurde (global für Zugriff von außen)
+
+            // Create 4 grids
+            for(let g = 0; g < numGrids; g++){
+                const gridEl = document.createElement('div');
+                gridEl.className = 'grid-container';
+                gridEl.setAttribute('aria-label', `Grid ${g+1} (6x16)`);
+                gridsWrapper.appendChild(gridEl);
+
+                // create cells for this grid
+                for(let r=0;r<rows;r++){
+                    for(let c=0;c<cols;c++){
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+                        cell.dataset.grid = g;
+                        cell.setAttribute('role','button');
+                        cell.setAttribute('aria-pressed','false');
+                        
+                        // Berechne globale Reihe (über alle Grids hinweg)
+                        const globalRow = g * rows + r;
+                        
+                        // Färbe bestimmte Kästen von Anfang an schwarz
+                        if (shouldBeInitialBlack(globalRow, c)) {
+                            cell.classList.add('active');
+                            cell.setAttribute('aria-pressed', 'true');
+                            cell.dataset.initialBlack = 'true'; // Markiere als initial schwarzen Kasten
+                        }
+
+                        gridEl.appendChild(cell);
+                    }
+                }
+
+                // Zellen werden jetzt global verwaltet, nicht pro Grid
+            }
+            
+            // Globale Zeichen-Funktionalität (über alle Grids hinweg)
+            let globalIsPointerDown = false;
+            let globalDrawMode = null;
+            let hasChanges = false; // Track ob Änderungen gemacht wurden
+            
+            function applyModeToCell(cell, mode){
+                if(!cell) return;
+                const wasActive = cell.classList.contains('active');
+                
+                if(mode === 'draw'){
+                    if(!wasActive){
+                        cell.classList.add('active');
+                        cell.setAttribute('aria-pressed','true');
+                        hasChanges = true;
+                    }
+                } else if(mode === 'erase'){
+                    if(wasActive){
+                        cell.classList.remove('active');
+                        cell.setAttribute('aria-pressed','false');
+                        hasChanges = true;
+                    }
+                }
+            }
+            
+            
+            // Funktion zum Entfernen der initialen schwarzen Kästen
+            function clearInitialBlackCells() {
+                if (initialBlackCleared) return; // Bereits entfernt
+                
+                const initialBlackCells = document.querySelectorAll('.cell[data-initial-black="true"]');
+                initialBlackCells.forEach(cell => {
+                    cell.classList.remove('active');
+                    cell.setAttribute('aria-pressed', 'false');
+                    delete cell.dataset.initialBlack;
+                });
+                initialBlackCleared = true;
+                saveGridState(); // Speichere den Zustand nach dem Entfernen
+            }
+            
+            // Event-Listener für Klick nach dem Schließen des Info-Fensters
+            function setupFirstClickAfterInfo() {
+                const clickHandler = function firstClickAfterInfoHandler(e) {
+                    // Ignoriere Klicks auf das Info-Fenster selbst
+                    const infoOverlay = document.getElementById('infoOverlay');
+                    if (infoOverlay && (infoOverlay.contains(e.target) || e.target.id === 'infoButton' || e.target.id === 'infoClose')) {
+                        return;
+                    }
+                    
+                    // Beim ersten Klick nach dem Schließen des Info-Fensters die initialen schwarzen Kästen entfernen
+                    if (!initialBlackCleared && window.infoWindowClosed) {
+                        clearInitialBlackCells();
+                        document.removeEventListener('click', clickHandler);
+                    }
+                };
+                
+                // Füge den Event-Listener hinzu
+                document.addEventListener('click', clickHandler);
+            }
+            
+            // Richte den Event-Listener ein
+            setupFirstClickAfterInfo();
+            
+            // Event-Listener auf dem gridsWrapper für globales Zeichnen
+            gridsWrapper.addEventListener('pointerdown', (e)=>{
+                // only left button or touch
+                if(e.pointerType === 'mouse' && e.button !== 0) return;
+                
+                const target = e.target.closest('.cell');
+                if(!target) return;
+
+                globalIsPointerDown = true;
+                gridsWrapper.setPointerCapture(e.pointerId);
+                
+                // Wenn Radiergummi-Modus aktiv, immer löschen
+                if (eraserMode) {
+                    globalDrawMode = 'erase';
+                    applyModeToCell(target, 'erase');
+                } else {
+                    // if the cell was active before click, we will erase while dragging; otherwise draw
+                    const wasActive = target.classList.contains('active');
+                    globalDrawMode = wasActive ? 'erase' : 'draw';
+                    applyModeToCell(target, globalDrawMode);
+                }
+                e.preventDefault();
+            });
+
+            // Globales pointermove - funktioniert über alle Grids hinweg
+            document.addEventListener('pointermove', (e)=>{
+                if(!globalIsPointerDown) return;
+                
+                // Radiergummi-Modus oder normaler Modus: Einzelne Zelle bearbeiten
+                const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.cell');
+                if(target) {
+                    if (eraserMode) {
+                        // Radiergummi-Modus: Immer löschen
+                        applyModeToCell(target, 'erase');
+                    } else {
+                        // Normaler Modus: Je nach DrawMode
+                        applyModeToCell(target, globalDrawMode);
+                    }
+                }
+            });
+            
+            document.addEventListener('pointerup', (e)=>{
+                if(globalIsPointerDown){
+                    globalIsPointerDown = false;
+                    
+                    // Speichere Zustand nach dem Zeichnen/Löschen (nur einmal am Ende)
+                    if (hasChanges) {
+                        saveGridState();
+                        hasChanges = false;
+                    }
+                    
+                    globalDrawMode = null;
+                    try {
+                        gridsWrapper.releasePointerCapture(e.pointerId);
+                    } catch(err) {}
+                }
+            });
+
+        })();
+        
+        // Undo/Redo History
+        let gridHistory = [];
+        let historyIndex = -1;
+        const maxHistorySize = 50;
+        
+        // Funktion zum Speichern des aktuellen Grid-Zustands
+        function saveGridState() {
+            const state = [];
+            const allCells = document.querySelectorAll('.cell');
+            allCells.forEach(cell => {
+                state.push(cell.classList.contains('active'));
+            });
+            
+            // Entferne alle Zustände nach dem aktuellen Index (wenn man nach einem Undo eine neue Änderung macht)
+            if (historyIndex < gridHistory.length - 1) {
+                gridHistory = gridHistory.slice(0, historyIndex + 1);
+            }
+            
+            gridHistory.push(JSON.stringify(state));
+            historyIndex = gridHistory.length - 1;
+            
+            // Begrenze History-Größe
+            if (gridHistory.length > maxHistorySize) {
+                gridHistory.shift();
+                historyIndex--;
+            }
+        }
+        
+        // Funktion zum Wiederherstellen eines Grid-Zustands
+        function restoreGridState(stateString) {
+            const state = JSON.parse(stateString);
+            const allCells = document.querySelectorAll('.cell');
+            allCells.forEach((cell, index) => {
+                if (state[index]) {
+                    cell.classList.add('active');
+                    cell.setAttribute('aria-pressed', 'true');
+                } else {
+                    cell.classList.remove('active');
+                    cell.setAttribute('aria-pressed', 'false');
+                }
+            });
+        }
+        
+        // Undo-Funktion
+        function undoGrid() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreGridState(gridHistory[historyIndex]);
+            }
+        }
+        
+        // Command+Z Event-Listener
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undoGrid();
+            }
+        });
+        
+        // Initialisiere History mit dem Anfangszustand
+        setTimeout(() => {
+            saveGridState();
+        }, 100);
+        
+        // PDF und Miniaturbild-Funktionalität
+        let imagesFolderHandle = null;
+        let thumbnailRow = null;
+        let currentRowCount = 0;
+        const thumbnailsPerRow = 6; // Genau 6 Thumbnails pro Reihe
+        const thumbnailContainer = document.getElementById('thumbnailContainer');
+        
+        // Funktion zum Auswählen/Speichern des images Ordners
+        async function getImagesFolder() {
+            if (imagesFolderHandle) return imagesFolderHandle;
+            
+            try {
+                if ('showDirectoryPicker' in window) {
+                    // Öffne Ordner-Picker - Benutzer wählt den Ordner, in dem der "images" Ordner liegt
+                    const handle = await window.showDirectoryPicker();
+                    
+                    // Versuche "images" Unterordner zu finden oder erstellen
+                    try {
+                        imagesFolderHandle = await handle.getDirectoryHandle('images', { create: true });
+                    } catch (error) {
+                        // Falls nicht möglich, prüfe ob der gewählte Ordner selbst "images" heißt
+                        if (handle.name === 'images' || handle.name.toLowerCase() === 'images') {
+                            imagesFolderHandle = handle;
+                        } else {
+                            // Versuche images Ordner zu erstellen
+                            imagesFolderHandle = await handle.getDirectoryHandle('images', { create: true });
+                        }
+                    }
+                    return imagesFolderHandle;
+                } else {
+                    alert('Ordner-Auswahl ist in diesem Browser nicht verfügbar. Dateien werden heruntergeladen.');
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Fehler beim Ordner-Auswählen:', error);
+                }
+            }
+            return null;
+        }
+        
+        // Funktion zum Konvertieren eines Grids zu Canvas (mit Gitterstäben)
+        function gridToCanvas(gridEl, includeBorder = true) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const cellWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-width')) || 48;
+            const cellHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-height')) || 24;
+            const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 2;
+            const border = 2; // Border des grid-container
+            
+            const cols = 16;
+            const rows = 6;
+            
+            // Berechne Gesamtgröße mit Border
+            // Die gap-Linien sind überall gleich: gap vor/nach jeder Zelle + padding
+            const borderWidth = includeBorder ? border * 2 : 0;
+            canvas.width = cols * cellWidth + (cols + 1) * gap + borderWidth;
+            canvas.height = rows * cellHeight + (rows + 1) * gap + borderWidth;
+            
+            // Hintergrund (für Gitterstäbe und Border) basierend auf Modus
+            ctx.fillStyle = isBlackMode ? '#ffffff' : '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Berechne Startposition mit Border
+            const gridStartX = includeBorder ? border : 0;
+            const gridStartY = includeBorder ? border : 0;
+            
+            // Zeichne Grid mit Zellen (weiße/schwarze Zellen auf schwarzem Hintergrund)
+            // Die gap-Linien entstehen automatisch durch den Hintergrund zwischen den Zellen
+            const cells = gridEl.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                const row = Math.floor(index / cols);
+                const col = index % cols;
+                
+                // Position berechnen: gap vor dem ersten Element, dann gap zwischen Elementen
+                // Dies stellt sicher, dass alle gap-Linien gleich dick sind (gap px)
+                const x = gridStartX + gap + col * (cellWidth + gap);
+                const y = gridStartY + gap + row * (cellHeight + gap);
+                
+                // Zellenfarbe - verwende die tatsächliche Hintergrundfarbe der Zelle
+                const bgColor = window.getComputedStyle(cell).backgroundColor;
+                const isWhite = bgColor === 'rgb(255, 255, 255)' || bgColor === '#ffffff' || bgColor === 'white';
+                const isBlack = bgColor === 'rgb(0, 0, 0)' || bgColor === '#000000' || bgColor === 'black';
+                
+                // Speichere die tatsächliche Farbe der Zelle (wie sie auf der Website angezeigt wird)
+                if (isWhite) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(x, y, cellWidth, cellHeight);
+                } else if (isBlack) {
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(x, y, cellWidth, cellHeight);
+                } else {
+                    // Fallback für andere Farben
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(x, y, cellWidth, cellHeight);
+                }
+            });
+            
+            return canvas;
+        }
+        
+        // Funktion zum Konvertieren eines Grids zu Canvas mit transparentem Hintergrund (für PNG)
+        function gridToCanvasTransparent(gridEl, includeBorder = true) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const cellWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-width')) || 48;
+            const cellHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-height')) || 24;
+            const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 2;
+            const border = 2; // Border des grid-container
+            
+            const cols = 16;
+            const rows = 6;
+            
+            // Berechne Gesamtgröße mit Border
+            const borderWidth = includeBorder ? border * 2 : 0;
+            canvas.width = cols * cellWidth + (cols + 1) * gap + borderWidth;
+            canvas.height = rows * cellHeight + (rows + 1) * gap + borderWidth;
+            
+            // KEIN Hintergrund - Canvas ist standardmäßig transparent
+            
+            // Berechne Startposition mit Border
+            const gridStartX = includeBorder ? border : 0;
+            const gridStartY = includeBorder ? border : 0;
+            
+            // Zeichne nur die Zellen (weiße/schwarze Zellen), keine Gitterlinien
+            const cells = gridEl.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                const row = Math.floor(index / cols);
+                const col = index % cols;
+                
+                // Position berechnen: gap vor dem ersten Element, dann gap zwischen Elementen
+                const x = gridStartX + gap + col * (cellWidth + gap);
+                const y = gridStartY + gap + row * (cellHeight + gap);
+                
+                // Zellenfarbe - verwende die tatsächliche Hintergrundfarbe der Zelle
+                const bgColor = window.getComputedStyle(cell).backgroundColor;
+                const isWhite = bgColor === 'rgb(255, 255, 255)' || bgColor === '#ffffff' || bgColor === 'white';
+                const isBlack = bgColor === 'rgb(0, 0, 0)' || bgColor === '#000000' || bgColor === 'black';
+                
+                // Speichere die tatsächliche Farbe der Zelle (wie sie auf der Website angezeigt wird)
+                if (isWhite) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(x, y, cellWidth, cellHeight);
+                } else if (isBlack) {
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(x, y, cellWidth, cellHeight);
+                } else {
+                    // Fallback für andere Farben
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(x, y, cellWidth, cellHeight);
+                }
+            });
+            
+            return canvas;
+        }
+        
+        // Funktion zum Speichern aller Grids als PDF (alle 4 übereinander auf einer Seite)
+        async function saveGridsAsPdf() {
+            // Erstelle ein Canvas mit allen 4 Grids übereinander (wie auf der Website)
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const cellWidth = 48;
+            const cellHeight = 24;
+            const gap = 2;
+            const border = 2;
+            const cols = 16;
+            const rows = 6;
+            
+            // Berechne Grid-Größe mit Border
+            const singleGridWidth = cols * cellWidth + (cols + 1) * gap + border * 2;
+            const singleGridHeight = rows * cellHeight + (rows + 1) * gap + border * 2;
+            const gridSpacing = 20; // Abstand zwischen den Grids (wie bei saveThumbnail)
+            
+            // Canvas-Größe für alle 4 Grids übereinander
+            canvas.width = singleGridWidth;
+            canvas.height = 4 * singleGridHeight + 3 * gridSpacing;
+            
+            // Hintergrund: Im Black-Modus schwarz (damit weiße Gitterlinien sichtbar sind), im Normal-Modus weiß (damit schwarze Gitterlinien sichtbar sind)
+            ctx.fillStyle = isBlackMode ? '#000000' : '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Zeichne alle 4 Grids übereinander
+            const grids = document.querySelectorAll('.grid-container');
+            grids.forEach((gridEl, gridIndex) => {
+                const gridCanvas = gridToCanvas(gridEl, true); // Mit Border wie Original
+                const y = gridIndex * (singleGridHeight + gridSpacing);
+                ctx.drawImage(gridCanvas, 0, y);
+            });
+            
+            // Berechne quadratisches Format - nur etwas größer als das Gitter-Muster
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const margin = 20; // Kleiner Rand in Pixeln
+            const squareSizePx = Math.max(imgWidth, imgHeight) + margin * 2;
+            
+            // Erstelle quadratisches Canvas für PDF
+            const squareCanvas = document.createElement('canvas');
+            squareCanvas.width = squareSizePx;
+            squareCanvas.height = squareSizePx;
+            const squareCtx = squareCanvas.getContext('2d');
+            
+            // Hintergrund: Im Black-Modus schwarz (damit weiße Gitterlinien sichtbar sind), im Normal-Modus weiß (damit schwarze Gitterlinien sichtbar sind)
+            squareCtx.fillStyle = isBlackMode ? '#000000' : '#ffffff';
+            squareCtx.fillRect(0, 0, squareSizePx, squareSizePx);
+            
+            // Zentriere das Bild auf dem quadratischen Canvas
+            const x = (squareSizePx - imgWidth) / 2;
+            const y = (squareSizePx - imgHeight) / 2;
+            squareCtx.drawImage(canvas, x, y);
+            
+            // Konvertiere Pixel zu mm (1px = 0.264583mm bei 96 DPI)
+            const pxToMm = 0.264583;
+            const squareSizeMm = squareSizePx * pxToMm;
+            
+            // Erstelle PDF mit quadratischem Format
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                unit: 'mm',
+                format: [squareSizeMm, squareSizeMm]
+            });
+            
+            // Füge das kombinierte Bild in die PDF ein
+            const imgData = squareCanvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 0, 0, squareSizeMm, squareSizeMm);
+            
+            // Download PDF
+            try {
+                // Dateiname basierend auf HTML-Dateiname
+                const baseFileName = window.location.pathname.split('/').pop().replace('.html', '').toUpperCase();
+                const fileName = `${baseFileName}.pdf`;
+                pdf.save(fileName);
+            } catch (error) {
+                console.error('Fehler beim Speichern:', error);
+                alert('Fehler beim Speichern des PDFs');
+            }
+        }
+        
+        // Funktion zum Speichern aller Grids als PNG mit transparentem Hintergrund
+        async function saveGridsAsJpeg() {
+            // Erstelle ein Canvas mit allen 4 Grids übereinander (wie auf der Website)
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const cellWidth = 48;
+            const cellHeight = 24;
+            const gap = 2;
+            const border = 2;
+            const cols = 16;
+            const rows = 6;
+            
+            // Berechne Grid-Größe mit Border
+            const singleGridWidth = cols * cellWidth + (cols + 1) * gap + border * 2;
+            const singleGridHeight = rows * cellHeight + (rows + 1) * gap + border * 2;
+            const gridSpacing = 20; // Abstand zwischen den Grids (wie bei saveThumbnail)
+            
+            // Canvas-Größe für alle 4 Grids übereinander
+            canvas.width = singleGridWidth;
+            canvas.height = 4 * singleGridHeight + 3 * gridSpacing;
+            
+            // Hintergrund IMMER weiß für JPEG
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Zeichne alle 4 Grids übereinander (mit Gitterlinien wie auf der Website)
+            const grids = document.querySelectorAll('.grid-container');
+            grids.forEach((gridEl, gridIndex) => {
+                const gridCanvas = gridToCanvas(gridEl, true); // Mit Gitterlinien wie auf der Website
+                const y = gridIndex * (singleGridHeight + gridSpacing);
+                ctx.drawImage(gridCanvas, 0, y);
+            });
+            
+            // Berechne quadratisches Format - nur etwas größer als das Gitter-Muster
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const margin = 20; // Kleiner Rand in Pixeln
+            const squareSizePx = Math.max(imgWidth, imgHeight) + margin * 2;
+            
+            // Hohe Auflösung für JPEG (300 DPI)
+            const dpi = 300;
+            const mmToInch = 0.0393701;
+            const pxToMm = 0.264583;
+            const squareSizeMm = squareSizePx * pxToMm;
+            const squareSizeInch = squareSizeMm * mmToInch;
+            const highResSizePx = Math.round(squareSizeInch * dpi);
+            
+            // Erstelle quadratisches Canvas für JPEG in hoher Auflösung
+            const squareCanvas = document.createElement('canvas');
+            squareCanvas.width = highResSizePx;
+            squareCanvas.height = highResSizePx;
+            const squareCtx = squareCanvas.getContext('2d');
+            
+            // Hintergrund IMMER weiß für JPEG
+            squareCtx.fillStyle = '#ffffff';
+            squareCtx.fillRect(0, 0, highResSizePx, highResSizePx);
+            
+            // Skaliere und zentriere das Bild auf dem quadratischen Canvas
+            const scale = highResSizePx / squareSizePx;
+            const scaledWidth = imgWidth * scale;
+            const scaledHeight = imgHeight * scale;
+            const x = (highResSizePx - scaledWidth) / 2;
+            const y = (highResSizePx - scaledHeight) / 2;
+            
+            // Hohe Qualität für das Zeichnen
+            squareCtx.imageSmoothingEnabled = true;
+            squareCtx.imageSmoothingQuality = 'high';
+            squareCtx.drawImage(canvas, x, y, scaledWidth, scaledHeight);
+            
+            // Download JPEG mit weißem Hintergrund
+            try {
+                const imgData = squareCanvas.toDataURL('image/jpeg', 0.95); // JPEG mit 95% Qualität
+                const link = document.createElement('a');
+                // Dateiname basierend auf HTML-Dateiname
+                const baseFileName = window.location.pathname.split('/').pop().replace('.html', '').toUpperCase();
+                link.download = `${baseFileName}.jpg`;
+                link.href = imgData;
+                link.click();
+            } catch (error) {
+                console.error('Fehler beim Speichern:', error);
+                alert('Fehler beim Speichern des JPEGs');
+            }
+        }
+        
+        // Funktion zum Erstellen einer neuen Reihe für Miniaturbilder
+        function createNewThumbnailRow() {
+            thumbnailRow = document.createElement('div');
+            thumbnailRow.className = 'thumbnail-row';
+            thumbnailContainer.appendChild(thumbnailRow);
+            currentRowCount = 0;
+        }
+        
+        // Funktion zum Holen oder Erstellen einer Thumbnail-Reihe
+        function getOrCreateThumbnailRow() {
+            if (!thumbnailRow || currentRowCount >= thumbnailsPerRow) {
+                createNewThumbnailRow();
+            }
+            return thumbnailRow;
+        }
+        
+        // Funktion zum Ein-/Ausschalten der Thumbnail-Auswahl
+        function toggleThumbnailSelection(thumbnailItem) {
+            thumbnailItem.classList.toggle('selected');
+            updateSaveButtonVisibility();
+        }
+        
+        // Funktion zum Aktualisieren der Sichtbarkeit des "Ausgewählte als JPEG speichern" Buttons
+        function updateSaveButtonVisibility() {
+            const selectedItems = document.querySelectorAll('.thumbnail-item.selected');
+            const saveSelectedPdfBtn = document.getElementById('saveSelectedPdfBtn');
+            const saveSelectedJpegBtn = document.getElementById('saveSelectedJpegBtn');
+            if (selectedItems.length > 0) {
+                if (saveSelectedPdfBtn) saveSelectedPdfBtn.style.display = 'block';
+                if (saveSelectedJpegBtn) saveSelectedJpegBtn.style.display = 'block';
+            } else {
+                if (saveSelectedPdfBtn) saveSelectedPdfBtn.style.display = 'none';
+                if (saveSelectedJpegBtn) saveSelectedJpegBtn.style.display = 'none';
+            }
+        }
+        
+        // Funktion zum Speichern ausgewählter Thumbnails als PDF
+        async function saveSelectedThumbnailsAsPdf() {
+            const selectedItems = document.querySelectorAll('.thumbnail-item.selected');
+            if (selectedItems.length === 0) {
+                alert('Bitte wählen Sie mindestens ein Gitter aus!');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const pxToMm = 0.264583; // 1px = 0.264583mm bei 96 DPI
+            let pdf = null;
+            
+            for (let i = 0; i < selectedItems.length; i++) {
+                const canvasData = selectedItems[i].dataset.canvasData;
+                if (!canvasData) continue;
+                
+                // Erstelle temporäres Bild-Element
+                const img = new Image();
+                await new Promise((resolve) => {
+                    img.onload = () => {
+                        // Berechne quadratisches Format - nur etwas größer als das Gitter-Muster
+                        const imgWidth = img.width;
+                        const imgHeight = img.height;
+                        const margin = 20; // Kleiner Rand in Pixeln
+                        const squareSizePx = Math.max(imgWidth, imgHeight) + margin * 2;
+                        const squareSizeMm = squareSizePx * pxToMm;
+                        
+                        // Erstelle PDF-Seite mit quadratischem Format
+                        if (!pdf) {
+                            pdf = new jsPDF({
+                                unit: 'mm',
+                                format: [squareSizeMm, squareSizeMm]
+                            });
+                        } else {
+                            pdf.addPage([squareSizeMm, squareSizeMm], 'mm');
+                        }
+                        
+                        const x = (squareSizeMm - (imgWidth * pxToMm)) / 2;
+                        const y = (squareSizeMm - (imgHeight * pxToMm)) / 2;
+                        
+                        pdf.addImage(canvasData, 'PNG', x, y, imgWidth * pxToMm, imgHeight * pxToMm);
+                        resolve();
+                    };
+                    img.src = canvasData;
+                });
+            }
+            
+            // Download PDF
+            try {
+                // Dateiname basierend auf HTML-Dateiname
+                const baseFileName = window.location.pathname.split('/').pop().replace('.html', '').toUpperCase();
+                const fileName = `${baseFileName}.pdf`;
+                pdf.save(fileName);
+                
+                // Auswahl zurücksetzen
+                selectedItems.forEach(item => item.classList.remove('selected'));
+                updateSaveButtonVisibility();
+            } catch (error) {
+                console.error('Fehler beim Speichern:', error);
+                alert('Fehler beim Speichern des PDFs');
+            }
+        }
+        
+        // Funktion zum Speichern ausgewählter Thumbnails als JPEG mit weißem Hintergrund
+        async function saveSelectedThumbnailsAsJpeg() {
+            const selectedItems = document.querySelectorAll('.thumbnail-item.selected');
+            if (selectedItems.length === 0) {
+                alert('Bitte wählen Sie mindestens ein Gitter aus!');
+                return;
+            }
+            
+            const baseTimestamp = Date.now();
+            
+            for (let i = 0; i < selectedItems.length; i++) {
+                const canvasData = selectedItems[i].dataset.canvasData;
+                if (!canvasData) continue;
+                
+                // Erstelle temporäres Bild-Element
+                const img = new Image();
+                await new Promise((resolve) => {
+                    img.onload = () => {
+                        // Berechne quadratisches Format - nur etwas größer als das Gitter-Muster
+                        const imgWidth = img.width;
+                        const imgHeight = img.height;
+                        const margin = 20; // Kleiner Rand in Pixeln
+                        const squareSizePx = Math.max(imgWidth, imgHeight) + margin * 2;
+                        
+                        // Hohe Auflösung für JPEG (300 DPI)
+                        const dpi = 300;
+                        const mmToInch = 0.0393701;
+                        const pxToMm = 0.264583;
+                        const squareSizeMm = squareSizePx * pxToMm;
+                        const squareSizeInch = squareSizeMm * mmToInch;
+                        const highResSizePx = Math.round(squareSizeInch * dpi);
+                        
+                        // Erstelle quadratisches Canvas für JPEG in hoher Auflösung
+                        const squareCanvas = document.createElement('canvas');
+                        squareCanvas.width = highResSizePx;
+                        squareCanvas.height = highResSizePx;
+                        const squareCtx = squareCanvas.getContext('2d');
+                        
+                        // Hintergrund IMMER weiß für JPEG
+                        squareCtx.fillStyle = '#ffffff';
+                        squareCtx.fillRect(0, 0, highResSizePx, highResSizePx);
+                        
+                        // Skaliere und zentriere das Bild auf dem quadratischen Canvas
+                        const scale = highResSizePx / squareSizePx;
+                        const scaledWidth = imgWidth * scale;
+                        const scaledHeight = imgHeight * scale;
+                        const x = (highResSizePx - scaledWidth) / 2;
+                        const y = (highResSizePx - scaledHeight) / 2;
+                        
+                        // Hohe Qualität für das Zeichnen
+                        squareCtx.imageSmoothingEnabled = true;
+                        squareCtx.imageSmoothingQuality = 'high';
+                        squareCtx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                        
+                        // Download JPEG mit weißem Hintergrund - jedes Gitter als separate Datei
+                        try {
+                            const imgData = squareCanvas.toDataURL('image/jpeg', 0.95); // JPEG mit 95% Qualität
+                            const link = document.createElement('a');
+                            // Dateiname basierend auf HTML-Dateiname mit Nummerierung
+                            const baseFileName = window.location.pathname.split('/').pop().replace('.html', '').toUpperCase();
+                            link.download = `${baseFileName}-${i + 1}.jpg`;
+                            link.href = imgData;
+                            link.click();
+                            
+                            // Kleine Verzögerung zwischen Downloads, damit der Browser sie nicht überschreibt
+                            setTimeout(() => {
+                                resolve();
+                            }, 100);
+                        } catch (error) {
+                            console.error('Fehler beim Speichern:', error);
+                            resolve();
+                        }
+                    };
+                    img.src = canvasData;
+                });
+            }
+            
+            // Auswahl zurücksetzen
+            selectedItems.forEach(item => item.classList.remove('selected'));
+            updateSaveButtonVisibility();
+        }
+        
+        // Funktion zum automatischen Erstellen/Finden des "images" Ordners
+        async function getImagesFolderAuto() {
+            // Wenn bereits ein Ordner ausgewählt wurde, verwende diesen
+            if (imagesFolderHandle) return imagesFolderHandle;
+            
+            try {
+                if ('showDirectoryPicker' in window) {
+                    // Öffne Ordner-Picker beim ersten Mal
+                    const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                    
+                    // Versuche "images" Unterordner zu finden oder erstellen
+                    try {
+                        imagesFolderHandle = await handle.getDirectoryHandle('images', { create: true });
+                        return imagesFolderHandle;
+                    } catch (error) {
+                        // Falls der gewählte Ordner selbst "images" heißt
+                        if (handle.name === 'images' || handle.name.toLowerCase() === 'images') {
+                            imagesFolderHandle = handle;
+                            return imagesFolderHandle;
+                        } else {
+                            // Versuche images Ordner im gewählten Verzeichnis zu erstellen
+                            imagesFolderHandle = await handle.getDirectoryHandle('images', { create: true });
+                            return imagesFolderHandle;
+                        }
+                    }
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Fehler beim Ordner-Auswählen:', error);
+                }
+            }
+            return null;
+        }
+        
+        // Funktion zum Hinzufügen eines Miniaturbilds
+        async function saveThumbnail() {
+            const cellWidth = 48;
+            const cellHeight = 24;
+            const gap = 2;
+            const border = 2;
+            const cols = 16;
+            const rows = 6;
+            
+            // Berechne Grid-Größe mit Border (wie Original)
+            const singleGridWidth = cols * cellWidth + (cols + 1) * gap + border * 2; // 806px
+            const singleGridHeight = rows * cellHeight + (rows + 1) * gap + border * 2; // 162px
+            const gridSpacing = 20;
+            
+            // Erstelle Canvas für Miniaturbild in hoher Auflösung (alle 4 Grids)
+            // Skaliere für höhere Qualität (300 DPI)
+            const scaleFactor = 3; // 3x für höhere Qualität
+            const thumbnailCanvas = document.createElement('canvas');
+            const thumbnailCtx = thumbnailCanvas.getContext('2d');
+            thumbnailCanvas.width = singleGridWidth * scaleFactor;
+            thumbnailCanvas.height = (4 * singleGridHeight + 3 * gridSpacing) * scaleFactor;
+            
+            // Hintergrund weiß
+            thumbnailCtx.fillStyle = '#ffffff';
+            thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+            
+            // Zeichne alle 4 Grids auf die Miniatur in hoher Auflösung
+            const grids = document.querySelectorAll('.grid-container');
+            grids.forEach((gridEl, gridIndex) => {
+                const gridCanvas = gridToCanvas(gridEl, true);
+                const y = gridIndex * (singleGridHeight + gridSpacing) * scaleFactor;
+                // Skaliere das Grid-Canvas auf die hohe Auflösung
+                thumbnailCtx.imageSmoothingEnabled = false; // Keine Glättung für scharfe Linien
+                thumbnailCtx.drawImage(gridCanvas, 0, y, singleGridWidth * scaleFactor, singleGridHeight * scaleFactor);
+            });
+            
+            // Display Canvas für Anzeige (normale Größe)
+            const displayCanvas = document.createElement('canvas');
+            const displayCtx = displayCanvas.getContext('2d');
+            displayCanvas.width = singleGridWidth;
+            displayCanvas.height = 4 * singleGridHeight + 3 * gridSpacing;
+            displayCtx.imageSmoothingEnabled = false;
+            displayCtx.drawImage(thumbnailCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
+            
+            // Erstelle auch ein Canvas für die gespeicherten Daten (alle 4 Grids in hoher Auflösung)
+            const fullCanvas = thumbnailCanvas; // Verwende das hochauflösende Canvas
+            
+            // Konvertiere zu Blob
+            thumbnailCanvas.toBlob(async (blob) => {
+                try {
+                    // Hole oder erstelle Thumbnail-Reihe
+                    const row = getOrCreateThumbnailRow();
+                    
+                    const thumbnailItem = document.createElement('div');
+                    thumbnailItem.className = 'thumbnail-item';
+                    thumbnailItem.draggable = true;
+                    // Speichere in hoher Qualität (JPEG mit 98% Qualität)
+                    thumbnailItem.dataset.canvasData = fullCanvas.toDataURL('image/jpeg', 0.98); // Speichere Original Canvas-Daten als JPEG in hoher Qualität
+                    
+                    // Speichere auch den Grid-Zustand als JSON
+                    const gridState = [];
+                    const allCells = document.querySelectorAll('.cell');
+                    allCells.forEach(cell => {
+                        gridState.push(cell.classList.contains('active'));
+                    });
+                    thumbnailItem.dataset.gridState = JSON.stringify(gridState);
+                    
+                    const img = document.createElement('img');
+                    img.src = displayCanvas.toDataURL('image/png'); // Verwende displayCanvas für Anzeige
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'contain';
+                    thumbnailItem.appendChild(img);
+                    
+                    row.appendChild(thumbnailItem);
+                    currentRowCount++;
+                    
+                    // Drag & Drop für Thumbnail auf Grid
+                    setupThumbnailDragDrop(thumbnailItem);
+                    
+                    // Click auf Miniaturbild - Auswahl/Abwahl
+                    let clickTimer = null;
+                    thumbnailItem.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        clearTimeout(clickTimer);
+                        clickTimer = setTimeout(() => {
+                            toggleThumbnailSelection(thumbnailItem);
+                        }, 200);
+                    });
+                    
+                    // Doppelklick zeigt es groß an
+                    thumbnailItem.addEventListener('dblclick', (e) => {
+                        e.preventDefault();
+                        clearTimeout(clickTimer);
+                        const fullImg = document.createElement('img');
+                        fullImg.src = fullCanvas.toDataURL('image/png');
+                        fullImg.style.position = 'fixed';
+                        fullImg.style.top = '50%';
+                        fullImg.style.left = '50%';
+                        fullImg.style.transform = 'translate(-50%, -50%)';
+                        fullImg.style.maxWidth = '90vw';
+                        fullImg.style.maxHeight = '90vh';
+                        fullImg.style.zIndex = '10000';
+                        fullImg.style.border = '4px solid #000';
+                        fullImg.style.background = '#fff';
+                        fullImg.style.padding = '10px';
+                        
+                        fullImg.addEventListener('click', () => {
+                            fullImg.remove();
+                        });
+                        
+                        document.body.appendChild(fullImg);
+                    });
+                    
+                } catch (error) {
+                    console.error('Fehler beim Erstellen des Miniaturbilds:', error);
+                    alert('Fehler beim Erstellen des Miniaturbilds');
+                }
+            }, 'image/png');
+        }
+        
+        // Event-Listener für Mode Buttons
+        document.getElementById('blackModeBtn').addEventListener('click', () => {
+            toggleBlackMode();
+        });
+        
+        document.getElementById('whiteModeBtn').addEventListener('click', () => {
+            toggleWhiteMode();
+        });
+        
+        // Initialisiere Sichtbarkeit der Buttons
+        showOtherButtons();
+        
+        // Funktion zum Zurücksetzen aller Kästen
+        function resetAllGrids() {
+            saveGridState(); // Speichere vor dem Zurücksetzen
+            const allCells = document.querySelectorAll('.cell');
+            allCells.forEach(cell => {
+                cell.classList.remove('active');
+                cell.setAttribute('aria-pressed', 'false');
+            });
+            saveGridState(); // Speichere nach dem Zurücksetzen
+        }
+        
+        // Erase Button (Undo)
+        const eraseBtn = document.getElementById('eraseBtn');
+        eraseBtn.addEventListener('click', () => {
+            undoGrid();
+        });
+        
+        // Event-Listener für Buttons
+        document.getElementById('savePdfBtn').addEventListener('click', () => {
+            getImagesFolder().then(() => {
+                saveGridsAsPdf();
+            });
+        });
+        
+        document.getElementById('saveJpegBtn').addEventListener('click', () => {
+            saveGridsAsJpeg();
+        });
+        
+        document.getElementById('saveThumbnailBtn').addEventListener('click', () => {
+            saveThumbnail();
+        });
+        
+        document.getElementById('resetGridBtn').addEventListener('click', () => {
+            resetAllGrids();
+        });
+        
+        document.getElementById('saveSelectedPdfBtn').addEventListener('click', () => {
+            saveSelectedThumbnailsAsJpeg();
+        });
+        
+        document.getElementById('saveSelectedJpegBtn').addEventListener('click', () => {
+            saveSelectedThumbnailsAsJpeg();
+        });
+        
+        // Icon-Button wird nicht mehr benötigt, da PDFs direkt heruntergeladen werden
+        // Entferne den Button oder mache ihn unsichtbar
+        document.getElementById('folderIconBtn').style.display = 'none';
+        
+        // Funktion zum Einrichten von Drag & Drop für Thumbnails
+        function setupThumbnailDragDrop(thumbnailItem) {
+            const gridsWrapper = document.getElementById('grids');
+            
+            // Drag start
+            thumbnailItem.addEventListener('dragstart', (e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', thumbnailItem.outerHTML);
+                e.dataTransfer.setData('gridState', thumbnailItem.dataset.gridState || '');
+                thumbnailItem.classList.add('dragging');
+            });
+            
+            // Drag end
+            thumbnailItem.addEventListener('dragend', (e) => {
+                thumbnailItem.classList.remove('dragging');
+                gridsWrapper.classList.remove('drag-over');
+                document.querySelectorAll('.thumbnail-row').forEach(row => {
+                    row.classList.remove('drag-over');
+                });
+            });
+            
+            // Drag over für Grid-Wrapper (zum Zurückladen auf Grid)
+            gridsWrapper.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                gridsWrapper.classList.add('drag-over');
+            });
+            
+            gridsWrapper.addEventListener('dragleave', (e) => {
+                if (!gridsWrapper.contains(e.relatedTarget)) {
+                    gridsWrapper.classList.remove('drag-over');
+                }
+            });
+            
+            // Drop auf Grid - lade Grid-Zustand zurück
+            gridsWrapper.addEventListener('drop', (e) => {
+                e.preventDefault();
+                gridsWrapper.classList.remove('drag-over');
+                
+                const gridState = e.dataTransfer.getData('gridState');
+                if (gridState) {
+                    try {
+                        const state = JSON.parse(gridState);
+                        restoreGridState(JSON.stringify(state));
+                        saveGridState(); // Speichere den wiederhergestellten Zustand
+                    } catch (error) {
+                        console.error('Fehler beim Wiederherstellen des Grid-Zustands:', error);
+                    }
+                }
+            });
+            
+            // Drag & Drop für Thumbnail-Reihenfolge innerhalb einer Reihe
+            // Finde die Reihe, zu der dieses Thumbnail gehört
+            const parentRow = thumbnailItem.parentElement;
+            if (parentRow && parentRow.classList.contains('thumbnail-row')) {
+                parentRow.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const dragging = document.querySelector('.thumbnail-item.dragging');
+                    if (!dragging) return;
+                    
+                    const afterElement = getDragAfterElement(parentRow, e.clientX);
+                    
+                    if (afterElement == null) {
+                        parentRow.appendChild(dragging);
+                    } else {
+                        parentRow.insertBefore(dragging, afterElement);
+                    }
+                });
+                
+                parentRow.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            }
+        }
+        
+        // Hilfsfunktion für Drag & Drop Position
+        function getDragAfterElement(container, x) {
+            const draggableElements = [...container.querySelectorAll('.thumbnail-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = x - box.left - box.width / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        // Drag & Drop für Thumbnail-Reihenfolge zwischen Reihen
+        document.addEventListener('DOMContentLoaded', () => {
+            const thumbnailContainer = document.getElementById('thumbnailContainer');
+            
+            // Erlaube Drop auf andere Thumbnail-Reihen
+            thumbnailContainer.addEventListener('dragover', (e) => {
+                const dragging = document.querySelector('.thumbnail-item.dragging');
+                if (!dragging) return;
+                
+                e.preventDefault();
+                const targetRow = e.target.closest('.thumbnail-row');
+                
+                if (targetRow && targetRow !== dragging.parentElement) {
+                    targetRow.classList.add('drag-over');
+                    
+                    // Finde Position innerhalb der Ziel-Reihe
+                    const afterElement = getDragAfterElement(targetRow, e.clientX);
+                    if (afterElement == null) {
+                        targetRow.appendChild(dragging);
+                    } else {
+                        targetRow.insertBefore(dragging, afterElement);
+                    }
+                }
+            });
+            
+            thumbnailContainer.addEventListener('dragleave', (e) => {
+                const rows = document.querySelectorAll('.thumbnail-row');
+                rows.forEach(row => {
+                    if (!row.contains(e.relatedTarget)) {
+                        row.classList.remove('drag-over');
+                    }
+                });
+            });
+            
+            thumbnailContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const rows = document.querySelectorAll('.thumbnail-row');
+                rows.forEach(row => row.classList.remove('drag-over'));
+            });
+        });
+        
+        // Thumbnail-Reihe wird beim ersten Speichern erstellt
+        
+        // PDF Overlay Funktionalität
+        function hidePdfOverlay() {
+            const pdfOverlay = document.getElementById('pdfOverlay');
+            if (pdfOverlay && !pdfOverlay.classList.contains('hidden')) {
+                pdfOverlay.classList.add('hidden');
+                // Speichere im localStorage, dass das Bild versteckt wurde
+                localStorage.setItem('pdfOverlayHidden', 'true');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const pdfOverlay = document.getElementById('pdfOverlay');
+            
+            // Prüfe, ob das Bild bereits versteckt wurde
+            const pdfHidden = localStorage.getItem('pdfOverlayHidden');
+            if (pdfHidden === 'true' && pdfOverlay) {
+                pdfOverlay.classList.add('hidden');
+            }
+            
+            // Beim Klick irgendwo auf der Seite das Bild verstecken
+            document.addEventListener('click', (e) => {
+                // Verstecke nur, wenn das Bild noch sichtbar ist
+                if (pdfOverlay && !pdfOverlay.classList.contains('hidden')) {
+                    hidePdfOverlay();
+                }
+            }, { once: true }); // { once: true } sorgt dafür, dass der Event-Listener nur einmal ausgeführt wird
+        });
+        
+        // Info Button Functionality
+        const infoButton = document.getElementById('infoButton');
+        const infoOverlay = document.getElementById('infoOverlay');
+        const infoClose = document.getElementById('infoClose');
+
+        // Automatically open info window on page load with animation
+        window.addEventListener('DOMContentLoaded', () => {
+            if (infoOverlay) {
+                // Small delay to ensure animation is visible
+                setTimeout(() => {
+                    infoOverlay.classList.add('active');
+                }, 50);
+            }
+        });
+
+        infoButton.addEventListener('click', () => {
+            infoOverlay.classList.add('active');
+        });
+
+        infoClose.addEventListener('click', () => {
+            infoOverlay.classList.remove('active');
+            // Markiere, dass das Info-Fenster geschlossen wurde
+            window.infoWindowClosed = true;
+        });
+
+        // Close info window when clicking anywhere on the page
+        document.addEventListener('click', (e) => {
+            if (infoOverlay && infoOverlay.classList.contains('active')) {
+                // Don't close if clicking inside the info window
+                if (!infoOverlay.querySelector('.info-window').contains(e.target) && e.target !== infoButton) {
+                    infoOverlay.classList.remove('active');
+                    // Markiere, dass das Info-Fenster geschlossen wurde
+                    window.infoWindowClosed = true;
+                }
+            }
+        });
+
+        infoOverlay.addEventListener('click', (e) => {
+            if (e.target === infoOverlay) {
+                infoOverlay.classList.remove('active');
+                // Markiere, dass das Info-Fenster geschlossen wurde
+                window.infoWindowClosed = true;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letter</title>
+    <!-- html2canvas für JPEG-Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'DEM-MOMono-300';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-300.otf') format('opentype');
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'DEM-MOMono-400';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-400.otf') format('opentype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'DEM-MO typeface';
+            src: url('DEM-MO typeface/Proportional/DEM-MO-400.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            overflow-x: hidden;
+            overflow-y: auto;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Info Button */
+        .info-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 0;
+            font-family: 'DEM-MO typeface', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .info-button:hover {
+            background-color: #333333;
+        }
+
+        /* Home Button */
+        .home-button {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 0;
+            font-family: 'DEM-MO typeface', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .home-button:hover {
+            background-color: #333333;
+        }
+
+        /* Floating Info Window */
+        .info-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .info-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .info-window {
+            background-color: #ffffff;
+            width: 80%;
+            max-width: 780px;
+            max-height: 90vh;
+            position: relative;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            font-family: 'DEM-MOMono-400', monospace;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .info-window p {
+            font-family: 'DEM-MOMono-400', monospace;
+            line-height: 1.6;
+        }
+
+        .info-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background-color: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .info-close:hover {
+            color: #666666;
+        }
+
+        body {
+            background-color: #ffffff;
+            font-family: 'DEM-MOMono-300', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 20px 50px 50px 50px;
+            gap: 20px;
+        }
+
+        .toolbar {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border: 2px solid #000000;
+            background-color: #ffffff;
+            font-family: 'DEM-MO typeface', 'DEM-MOMono-300', monospace;
+        }
+        
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .toolbar-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            text-transform: none;
+            font-family: 'DEM-MO typeface', 'DEM-MOMono-300', monospace;
+        }
+        
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .toolbar-button {
+            padding: 4px 14px;
+            font-size: 12px;
+            border-radius: 0;
+            border: 1px solid #000;
+            background-color: #ffffff;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'DEM-MO typeface', 'DEM-MOMono-300', monospace;
+        }
+
+        .toolbar-button.active {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .rectangles-container {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            user-select: none;
+            position: relative;
+        }
+
+        .rectangles-container:active {
+            cursor: grabbing;
+        }
+
+        body.erase-mode .rectangles-container,
+        body.erase-mode .rectangle {
+            cursor: crosshair;
+        }
+
+        .rectangle {
+            width: 4px;
+            background-color: #000000;
+            border-radius: 2px;
+            /* Höhe wird per JavaScript gesetzt */
+        }
+        
+        /* Black Mode - invertierte Farben mit CSS filter */
+        body.black-mode {
+            background-color: #000000;
+        }
+        
+        /* Wende Filter auf alle Kinder an, nicht auf body selbst */
+        body.black-mode > * {
+            filter: invert(1);
+        }
+        
+        /* Info und Home Button sollen nicht invertiert werden */
+        body.black-mode .info-button,
+        body.black-mode .home-button {
+            filter: invert(1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Info Button -->
+    <button class="info-button" id="infoButton">i</button>
+    
+    <!-- Home Button -->
+    <a href="TECHNOTOOLS.html" class="home-button" id="homeButton">⌂</a>
+
+    <!-- Info Floating Window -->
+    <div class="info-overlay" id="infoOverlay">
+        <div class="info-window">
+            <button class="info-close" id="infoClose">×</button>
+            <p>This interactive website lets you play DJ and design visuals at the same time. By shifting audio tracks, erasing shapes, and mixing sounds, you generate patterns, typography, and forms in real time. Experiment with composition, then save your created visuals.</p>
+        </div>
+    </div>
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <button id="moveButton" class="toolbar-button active">move</button>
+            <button id="eraseButton" class="toolbar-button">erase</button>
+            <button id="blackModeButton" class="toolbar-button">black mode</button>
+            <button id="exportJpegButton" class="toolbar-button">export jpeg</button>
+        </div>
+        <div class="toolbar-center">move the tracks and create visuals:</div>
+        <div class="toolbar-right">
+            <span style="font-size: 11px; text-transform: none; font-family: 'DEM-MO typeface', 'DEM-MOMono-300', monospace;">
+                undo: cmd+z / ctrl+z
+            </span>
+        </div>
+    </div>
+
+    <div id="tracksContainer"></div>
+
+    <script>
+        const tracksContainer = document.getElementById('tracksContainer');
+        const moveButton = document.getElementById('moveButton');
+        const eraseButton = document.getElementById('eraseButton');
+        const blackModeButton = document.getElementById('blackModeButton');
+        const exportJpegButton = document.getElementById('exportJpegButton');
+        const numberOfTracks = 9;
+
+        // Zustand für Erase-Modus & Undo
+        let isEraseMode = false;
+        let isMoveMode = true; // Standardmäßig im Move-Modus
+        let isBlackMode = false; // Black Mode Status
+        let isErasing = false;
+        let trackTranslations = {}; // Speichert die Verschiebung für jede Spur
+        let draggedTrackIndex = null;
+        let startX = 0;
+        let startTranslate = 0;
+
+        const historyStack = [];
+
+        function captureStateForUndo() {
+            const rects = Array.from(document.querySelectorAll('.rectangle'));
+            const rectColors = rects.map(r => r.style.backgroundColor || '#000000');
+
+            historyStack.push({
+                trackTranslations: { ...trackTranslations },
+                rectColors
+            });
+        }
+
+        function applyState(state) {
+            // Spuren wiederherstellen
+            trackTranslations = { ...state.trackTranslations };
+            const tracks = document.querySelectorAll('.rectangles-container');
+            tracks.forEach(track => {
+                const idx = parseInt(track.dataset.trackIndex, 10);
+                const t = trackTranslations[idx] || 0;
+                track.style.transform = `translateX(${t}px)`;
+            });
+
+            // Rechteck-Farben wiederherstellen (so weit wie möglich)
+            const rects = Array.from(document.querySelectorAll('.rectangle'));
+            const len = Math.min(rects.length, state.rectColors.length);
+            for (let i = 0; i < len; i++) {
+                rects[i].style.backgroundColor = state.rectColors[i];
+            }
+        }
+
+        function undoLastAction() {
+            if (historyStack.length === 0) return;
+            const prev = historyStack.pop();
+            applyState(prev);
+        }
+        
+        function createTrack() {
+            // Rechteck-Breite und Gap
+            const rectWidth = 4;
+            const gap = 2;
+            
+            // Berechne verfügbare Breite (Bildschirmbreite minus 50px Padding links und rechts)
+            const availableWidth = window.innerWidth - (50 * 2);
+            const numberOfRectangles = Math.floor(availableWidth / (rectWidth + gap));
+            
+            // Erstelle Container für eine Spur
+            const trackContainer = document.createElement('div');
+            trackContainer.className = 'rectangles-container';
+
+            // Erstelle Rechtecke mit unterschiedlichen Höhen (wie Tonspur)
+            const minHeight = 10;
+            const maxHeight = 100;
+
+            for (let i = 0; i < numberOfRectangles; i++) {
+                const rect = document.createElement('div');
+                rect.className = 'rectangle';
+
+                // Zufällige Höhe für jeden Rechteck (wie Tonspur)
+                const randomHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+                rect.style.height = randomHeight + 'px';
+
+                // Erase-Events
+                rect.addEventListener('mousedown', (e) => startEraseOnRect(e, rect));
+                rect.addEventListener('touchstart', (e) => startEraseOnRect(e, rect));
+                rect.addEventListener('mouseenter', () => hoverEraseOnRect(rect));
+
+                trackContainer.appendChild(rect);
+            }
+
+            return trackContainer;
+        }
+
+        function createAllTracks() {
+            // Behalte vorhandene Verschiebungen
+            const oldTranslations = { ...trackTranslations };
+            
+            // Leere Container
+            tracksContainer.innerHTML = '';
+            
+            // Erstelle 9 Spuren
+            for (let i = 0; i < numberOfTracks; i++) {
+                const track = createTrack();
+                track.dataset.trackIndex = i;
+                
+                // Verwende gespeicherte Verschiebung oder 0
+                const translation = oldTranslations[i] !== undefined ? oldTranslations[i] : 0;
+                trackTranslations[i] = translation;
+                track.style.transform = `translateX(${translation}px)`;
+                
+                // Event Listeners für Drag
+                track.addEventListener('mousedown', (e) => {
+                    if (isEraseMode) {
+                        startEraseOnContainer(e);
+                    } else {
+                        startDragTrack(e, i);
+                    }
+                });
+                track.addEventListener('touchstart', (e) => {
+                    if (isEraseMode) {
+                        startEraseOnContainer(e);
+                    } else {
+                        startDragTrack(e, i);
+                    }
+                });
+                
+                tracksContainer.appendChild(track);
+            }
+            
+            // Event Listener für Klick auf weiße Fläche (tracksContainer selbst) im Erase-Modus
+            tracksContainer.addEventListener('mousedown', (e) => {
+                if (isEraseMode && e.target === tracksContainer) {
+                    startEraseOnContainer(e);
+                }
+            });
+            tracksContainer.addEventListener('touchstart', (e) => {
+                if (isEraseMode && e.target === tracksContainer) {
+                    startEraseOnContainer(e);
+                }
+            });
+            
+            console.log('Anzahl Spuren: ' + numberOfTracks);
+        }
+
+        // Drag-Funktionalität für einzelne Spuren
+        function startDragTrack(e, trackIndex) {
+            if (isEraseMode) return; // im Erase-Modus nicht verschieben
+            draggedTrackIndex = trackIndex;
+            startX = e.clientX || e.touches[0].clientX;
+            startTranslate = trackTranslations[trackIndex] || 0;
+            captureStateForUndo();
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Starte Radieren beim Klicken auf weiße Fläche im Erase-Modus
+        function startEraseOnContainer(e) {
+            if (!isEraseMode) return;
+            // Prüfe ob Klick auf tracksContainer selbst (weiße Fläche) war, nicht auf ein Rechteck oder eine Spur
+            if (e.target === tracksContainer || e.target.classList.contains('rectangles-container')) {
+                captureStateForUndo();
+                isErasing = true;
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                if (clientX != null && clientY != null) {
+                    eraseAtPosition(clientX, clientY);
+                }
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+
+        function dragTrack(e) {
+            if (draggedTrackIndex === null) return;
+            e.preventDefault();
+            
+            const currentX = e.clientX || e.touches[0].clientX;
+            const diffX = currentX - startX;
+            const newTranslate = startTranslate + diffX;
+            
+            // KEINE Begrenzung - Spur kann unbegrenzt nach links und rechts verschoben werden
+            trackTranslations[draggedTrackIndex] = newTranslate;
+            
+            // Verschiebe Spur
+            const track = tracksContainer.querySelector(`[data-track-index="${draggedTrackIndex}"]`);
+            if (track) {
+                track.style.transform = `translateX(${newTranslate}px)`;
+            }
+        }
+
+        function endDragTrack(e) {
+            if (draggedTrackIndex === null) return;
+            draggedTrackIndex = null;
+        }
+
+        // Erase-Funktionalität für Rechtecke
+        function paintRectWhite(rect) {
+            rect.style.backgroundColor = '#ffffff';
+        }
+
+        function eraseAtPosition(clientX, clientY) {
+            const radius = 40; // größerer Radius um den Cursor
+            const radiusSq = radius * radius;
+            const rects = document.querySelectorAll('.rectangle');
+
+            rects.forEach(rect => {
+                const box = rect.getBoundingClientRect();
+                const cx = box.left + box.width / 2;
+                const cy = box.top + box.height / 2;
+                const dx = cx - clientX;
+                const dy = cy - clientY;
+                const distSq = dx * dx + dy * dy;
+                if (distSq <= radiusSq) {
+                    paintRectWhite(rect);
+                }
+            });
+        }
+
+        function startEraseOnRect(e, rect) {
+            if (!isEraseMode) return;
+            captureStateForUndo();
+            isErasing = true;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            if (clientX != null && clientY != null) {
+                eraseAtPosition(clientX, clientY);
+            } else {
+                paintRectWhite(rect);
+            }
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function hoverEraseOnRect(rect) {
+            // Logik jetzt über globales mousemove / touchmove gelöst
+            if (!isEraseMode || !isErasing) return;
+            // Fallback: einzelne Rechtecke trotzdem weiß färben
+            paintRectWhite(rect);
+        }
+
+        function stopErasing() {
+            isErasing = false;
+        }
+
+        // Event Listeners für Drag / Erase global
+        document.addEventListener('mousemove', (e) => {
+            if (isEraseMode && isErasing) {
+                eraseAtPosition(e.clientX, e.clientY);
+            } else {
+                dragTrack(e);
+            }
+        });
+        document.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            if (isEraseMode && isErasing && touch) {
+                eraseAtPosition(touch.clientX, touch.clientY);
+            } else {
+                dragTrack(e);
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            endDragTrack(e);
+            stopErasing();
+        });
+        document.addEventListener('touchend', (e) => {
+            endDragTrack(e);
+            stopErasing();
+        });
+        document.addEventListener('mouseleave', (e) => {
+            endDragTrack(e);
+            stopErasing();
+        });
+
+        // Move-Button
+        moveButton.addEventListener('click', () => {
+            isMoveMode = true;
+            isEraseMode = false;
+            document.body.classList.remove('erase-mode');
+            moveButton.classList.add('active');
+            eraseButton.classList.remove('active');
+        });
+
+        // Erase-Button
+        eraseButton.addEventListener('click', () => {
+            isMoveMode = false;
+            isEraseMode = true;
+            document.body.classList.add('erase-mode');
+            moveButton.classList.remove('active');
+            eraseButton.classList.add('active');
+        });
+        
+        // Black Mode Button
+        if (blackModeButton) {
+            blackModeButton.addEventListener('click', () => {
+                isBlackMode = !isBlackMode;
+                document.body.classList.toggle('black-mode', isBlackMode);
+                blackModeButton.classList.toggle('active', isBlackMode);
+            });
+        }
+
+        // Undo (Cmd+Z / Ctrl+Z)
+        document.addEventListener('keydown', (e) => {
+            const isZ = e.key === 'z' || e.key === 'Z';
+            if ((e.metaKey || e.ctrlKey) && isZ && !e.shiftKey) {
+                e.preventDefault();
+                undoLastAction();
+            }
+        });
+
+        // JPEG-Export des Spur-Fensters
+        async function exportTracksAsJpeg() {
+            if (!window.html2canvas) {
+                alert('Export-Bibliothek konnte nicht geladen werden.');
+                return;
+            }
+
+            // Bereich: nur das Fenster mit den Spuren
+            const element = tracksContainer;
+
+            // Wenn Black Mode aktiv ist, entfernen wir temporär den Filter
+            // und invertieren dann manuell die Farben
+            const wasBlackMode = isBlackMode;
+            let toolbarContainer = null;
+            
+            if (wasBlackMode) {
+                // Temporär Black Mode deaktivieren für Screenshot
+                document.body.classList.remove('black-mode');
+                // Warte kurz, damit der DOM aktualisiert wird
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+
+            // Canvas aus dem Element rendern (immer mit weißem Hintergrund, dann invertieren wir)
+            const canvas = await html2canvas(element, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                useCORS: true,
+                logging: false
+            });
+            
+            // Black Mode wieder aktivieren wenn er vorher aktiv war
+            if (wasBlackMode) {
+                document.body.classList.add('black-mode');
+                
+                // Jetzt invertieren wir die Pixel manuell: schwarz wird weiß, weiß wird schwarz
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                // Invertiere alle Pixel
+                for (let i = 0; i < data.length; i += 4) {
+                    // Invertiere RGB-Werte
+                    data[i] = 255 - data[i];     // R
+                    data[i + 1] = 255 - data[i + 1]; // G
+                    data[i + 2] = 255 - data[i + 2]; // B
+                    // Alpha bleibt unverändert
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            // Als JPEG speichern
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            
+            // Download-Link erstellen
+            const link = document.createElement('a');
+            // Dateiname basierend auf HTML-Dateiname
+            const baseFileName = window.location.pathname.split('/').pop().replace('.html', '').toUpperCase();
+            link.download = baseFileName + '.jpg';
+            link.href = imgData;
+            link.click();
+        }
+
+        exportJpegButton.addEventListener('click', () => {
+            exportTracksAsJpeg();
+        });
+        
+        // Erstelle Spuren beim Laden
+        createAllTracks();
+        
+        // Erstelle Spuren neu bei Fenstergrößenänderung
+        window.addEventListener('resize', () => {
+            // Bei starker Layout-Änderung: Undo-Verlauf leeren
+            historyStack.length = 0;
+            createAllTracks();
+        });
+        // Info Button Functionality
+        const infoButton = document.getElementById('infoButton');
+        const infoOverlay = document.getElementById('infoOverlay');
+        const infoClose = document.getElementById('infoClose');
+
+        // Automatically open info window on page load with animation
+        window.addEventListener('DOMContentLoaded', () => {
+            if (infoOverlay) {
+                // Small delay to ensure animation is visible
+                setTimeout(() => {
+                    infoOverlay.classList.add('active');
+                }, 50);
+            }
+        });
+
+        infoButton.addEventListener('click', () => {
+            infoOverlay.classList.add('active');
+        });
+
+        infoClose.addEventListener('click', () => {
+            infoOverlay.classList.remove('active');
+        });
+
+        // Close info window when clicking anywhere on the page
+        document.addEventListener('click', (e) => {
+            if (infoOverlay && infoOverlay.classList.contains('active')) {
+                // Don't close if clicking inside the info window
+                if (!infoOverlay.querySelector('.info-window').contains(e.target) && e.target !== infoButton) {
+                    infoOverlay.classList.remove('active');
+                }
+            }
+        });
+
+        infoOverlay.addEventListener('click', (e) => {
+            if (e.target === infoOverlay) {
+                infoOverlay.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,3892 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DancePixel Debug - Pixel Generation Test</title>
+    <style>
+        @font-face {
+            font-family: 'DEM-MOMono-300';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-300.otf') format('opentype');
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'DEM-MOMono-400';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-400.otf') format('opentype');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DEM-MOMono-300', monospace;
+            background: #ffffff;
+            color: #000000;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: #f5f5f5;
+            border-right: 2px solid #000;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-header {
+            font-size: 14px;
+            font-family: 'DEM-MOMono-400', monospace;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        /* Video Display */
+        .video-display {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: space-between;
+            background: #fff;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .pixelgrid-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            padding: 20px;
+            margin: 20px;
+        }
+
+        .pixelgrid-main canvas {
+            max-width: 100%;
+            height: auto !important;
+            width: auto !important;
+        }
+
+        .canvas-sidebar-right {
+            flex: 0 0 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
+        }
+
+        .canvas-sidebar-right .canvas-wrapper {
+            flex: 0 0 auto;
+        }
+
+        .canvas-sidebar-right canvas {
+            width: 400px !important;
+            height: 300px !important;
+        }
+
+        /* Topbar Layout */
+        .canvas-topbar {
+            width: 100%;
+            background: #f5f5f5;
+            border-bottom: 2px solid #000;
+            padding: 10px;
+            display: none;
+            transition: max-height 0.3s ease;
+            overflow: hidden;
+        }
+
+        .canvas-topbar.active {
+            display: block;
+        }
+
+        .canvas-topbar.collapsed {
+            max-height: 40px;
+        }
+
+        .canvas-topbar.expanded {
+            max-height: 400px;
+        }
+
+        .topbar-toggle {
+            background: #000;
+            color: #fff;
+            padding: 8px 16px;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-family: 'DEM-MOMono-400', monospace;
+        }
+
+        .topbar-canvas-row {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .topbar-canvas-row .canvas-wrapper {
+            flex: 0 0 auto;
+        }
+
+        .topbar-canvas-row canvas {
+            width: 320px !important;
+            height: 240px !important;
+        }
+
+        .layout-mode-sidebar .canvas-topbar {
+            display: none !important;
+        }
+
+        .layout-mode-topbar .canvas-sidebar-right {
+            display: none !important;
+        }
+
+        .layout-mode-topbar .pixelgrid-main {
+            flex: 1;
+            max-width: 100%;
+        }
+
+        .canvas-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .canvas-label {
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        canvas {
+            display: block;
+            border: none;
+            max-width: 100%;
+            height: auto;
+        }
+
+        #videoCanvas {
+            background: #000;
+        }
+
+        #stickmanCanvas {
+            background: #fff;
+        }
+
+        /* Buttons */
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 0;
+            cursor: pointer;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Input Groups */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-size: 12px;
+        }
+
+        .input-group input,
+        .input-group select {
+            padding: 8px;
+            border: 1px solid #000;
+            border-radius: 0;
+            font-family: 'DEM-MOMono-300', monospace;
+        }
+
+        /* Status */
+        .status {
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 0;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .status.connected {
+            background: #000;
+            color: #fff;
+        }
+
+        /* Video Drop Area */
+        .video-drop-area {
+            width: 100%;
+            height: 80px;
+            border: 2px dashed #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 0;
+            background: #fafafa;
+            text-align: center;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .video-drop-area:hover {
+            background: #f0f0f0;
+        }
+
+        .video-drop-area.has-video {
+            border-style: solid;
+            background: #e8ffe8;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background: #e0e0e0;
+            border-radius: 0;
+            overflow: hidden;
+            height: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #000;
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        /* Video Queue */
+        .video-queue {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .video-item {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .video-item:hover {
+            background: #f0f0f0;
+            border-color: #000;
+        }
+
+        .video-item.selected {
+            background: #000;
+            color: #fff;
+            border-color: #000;
+        }
+
+        .video-item.processing {
+            background: #ffffcc;
+        }
+
+        .video-item.completed {
+            background: #e8ffe8;
+        }
+
+        .video-item.failed {
+            background: #ffe8e8;
+        }
+
+        .video-item-name {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .video-item-status {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .video-item-progress {
+            height: 3px;
+            background: #ddd;
+            margin-top: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .video-item-progress-bar {
+            height: 100%;
+            background: #000;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .video-item.selected .video-item-progress-bar {
+            background: #fff;
+        }
+
+        /* Info Box */
+        .info-box {
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        /* Collapsible Canvas Sections */
+        .canvas-section {
+            margin-bottom: 15px;
+            border: 1px solid #000;
+        }
+
+        .canvas-section-header {
+            background: #000;
+            color: #fff;
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .canvas-section-header:hover {
+            background: #333;
+        }
+
+        .canvas-section-content {
+            padding: 10px;
+            display: none;
+            background: #fff;
+        }
+
+        .canvas-section-content.active {
+            display: block;
+        }
+
+        .canvas-section-arrow {
+            transition: transform 0.3s;
+            margin-left: auto;
+            padding-left: 10px;
+        }
+
+        .canvas-section-arrow.open {
+            transform: rotate(90deg);
+        }
+
+        .info-box strong {
+            font-family: 'DEM-MOMono-400', monospace;
+        }
+
+        /* ==========================================
+           RESPONSIVE DESIGN (Mobile & Tablet)
+           ========================================== */
+        
+        /* Tablet (Portrait) - max 768px */
+        @media screen and (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                min-width: unset;
+                border-right: none;
+                border-bottom: 2px solid #000;
+                max-height: 40vh;
+                overflow-y: auto;
+            }
+
+            .video-display {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+            .pixelgrid-main {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+
+            .canvas-sidebar-right {
+                width: 100%;
+                max-height: none;
+                overflow-y: visible;
+            }
+
+            .canvas-wrapper canvas {
+                max-width: 100%;
+                height: auto !important;
+            }
+
+            .info-button, .support-button {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+
+            .support-button {
+                top: 70px;
+            }
+
+            /* Make intro modal scrollable on small screens */
+            .intro-modal-content {
+                max-height: 90vh;
+                overflow-y: auto;
+                padding: 30px 25px;
+            }
+
+            .intro-modal h1 {
+                font-size: 24px;
+            }
+
+            .intro-modal p {
+                font-size: 14px;
+            }
+        }
+
+        /* Mobile (Portrait) - max 480px */
+        @media screen and (max-width: 480px) {
+            body {
+                font-size: 13px;
+            }
+
+            .sidebar {
+                padding: 15px;
+                max-height: 50vh;
+            }
+
+            .section-header {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .input-group label {
+                font-size: 12px;
+            }
+
+            .input-group input[type="range"] {
+                height: 30px; /* Easier to touch */
+            }
+
+            .input-group button, 
+            button {
+                padding: 12px 15px;
+                font-size: 13px;
+                min-height: 44px; /* Apple's recommended touch target */
+            }
+
+            .canvas-label {
+                font-size: 11px;
+                padding: 6px;
+            }
+
+            .canvas-wrapper {
+                margin-bottom: 15px;
+            }
+
+            .info-button, .support-button {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+                top: 15px;
+                right: 15px;
+            }
+
+            .support-button {
+                top: 60px;
+            }
+
+            .intro-modal-content {
+                padding: 25px 20px;
+                width: 95%;
+            }
+
+            .intro-modal h1 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+
+            .intro-modal p {
+                font-size: 13px;
+                line-height: 1.6;
+            }
+
+            .intro-modal h2 {
+                font-size: 16px;
+                margin-top: 20px;
+            }
+
+            .intro-modal li {
+                font-size: 12px;
+                line-height: 1.6;
+            }
+
+            .intro-modal-close {
+                padding: 12px 30px;
+                font-size: 14px;
+            }
+
+            /* Stack layout for topbar mode on mobile */
+            .layout-mode-topbar .video-display {
+                flex-direction: column !important;
+            }
+
+            #dynamicTopbar {
+                width: 100% !important;
+                max-height: none !important;
+            }
+
+            .topbar-resize-handle {
+                display: none; /* No resizing on mobile */
+            }
+
+            /* Adjust pixel grid canvas size on mobile */
+            #pixelGridCanvas {
+                max-width: 100%;
+                height: auto;
+            }
+
+            /* Better spacing for converter section */
+            .canvas-section-content {
+                padding: 10px;
+            }
+
+            /* Video display adjustments */
+            .video-display {
+                padding: 5px;
+            }
+        }
+
+        /* Landscape mode optimizations */
+        @media screen and (max-width: 768px) and (orientation: landscape) {
+            .sidebar {
+                max-height: 30vh;
+            }
+
+            .container {
+                flex-direction: row;
+            }
+
+            .sidebar {
+                width: 40%;
+                border-right: 2px solid #000;
+                border-bottom: none;
+            }
+
+            .video-display {
+                width: 60%;
+            }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            /* Increase tap targets for touch devices */
+            button, input[type="range"], select {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .canvas-section-header {
+                padding: 12px 15px;
+                cursor: pointer;
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+            }
+
+            /* Prevent text selection on repeated taps */
+            .canvas-section-header, button {
+                -webkit-user-select: none;
+                user-select: none;
+            }
+        }
+
+        /* Intro Modal */
+        .intro-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .intro-modal-content {
+            background: #ffffff;
+            border: 3px solid #000000;
+            padding: 50px 60px;
+            max-width: 700px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .intro-modal h1 {
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .intro-modal p {
+            font-family: 'DEM-MOMono-300', monospace;
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            text-align: left;
+        }
+
+        .intro-modal-close {
+            background: #000000;
+            color: #ffffff;
+            border: none;
+            padding: 15px 40px;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .intro-modal-close:hover {
+            background: #333333;
+            transform: scale(1.05);
+        }
+
+        .intro-modal-close:active {
+            transform: scale(0.98);
+        }
+
+        /* Info Button */
+        .info-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 50%;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-button:hover {
+            background: #333333;
+            transform: scale(1.1);
+        }
+
+        .info-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Support Button */
+        .support-button {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 50%;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .support-button:hover {
+            background: #333333;
+            transform: scale(1.1);
+        }
+
+        .support-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Home Button */
+        .home-button {
+            position: fixed;
+            top: 140px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 50%;
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+        }
+
+        .home-button:hover {
+            background: #333333;
+            transform: scale(1.1);
+        }
+
+        .home-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Extended Info Modal */
+        .info-modal-extended {
+            display: none;
+        }
+
+        .info-modal-extended .intro-modal-content {
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .info-modal-extended h2 {
+            font-family: 'DEM-MOMono-400', monospace;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-modal-extended h2:first-of-type {
+            margin-top: 0;
+        }
+
+        .info-modal-extended ul {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        .info-modal-extended li {
+            font-family: 'DEM-MOMono-300', monospace;
+            font-size: 15px;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .info-modal-extended strong {
+            font-family: 'DEM-MOMono-400', monospace;
+        }
+    </style>
+</head>
+<body>
+    <!-- Info Button -->
+    <button class="info-button" id="infoButton" title="Information">i</button>
+
+    <!-- Support Button -->
+    <button class="support-button" id="supportButton" title="Support">?</button>
+
+    <!-- Home Button -->
+    <a href="TECHNOTOOLS.html" class="home-button" title="Back to Tools">⌂</a>
+
+    <!-- Intro Modal (Short Version) -->
+    <div class="intro-modal" id="introModal">
+        <div class="intro-modal-content">
+            <h1>DancePixel</h1>
+            <p>
+                This interactive website turns dance videos into digital art. Upload a video of yourself or others dancing in a techno frenzy and transform the movements into a dancing pixel character. You can save the individual frames as PNG or PDF, or record and export your own video from the animation.
+            </p>
+            <button class="intro-modal-close" id="introModalClose">Start</button>
+        </div>
+    </div>
+
+    <!-- Extended Info Modal -->
+    <div class="intro-modal info-modal-extended" id="infoModalExtended">
+        <div class="intro-modal-content">
+            <h1>DancePixel</h1>
+            
+            <h2>What is DancePixel?</h2>
+            <p>
+                This interactive website turns dance videos into digital art. Upload a video of yourself or others dancing in a techno frenzy and transform the movements into a dancing pixel character. You can save the individual frames as PNG or PDF, or record and export your own video from the animation.
+            </p>
+
+            <h2>How It Works</h2>
+            <ul>
+                <li><strong>1. Upload Video:</strong> Select a dance video (MP4, MOV, or WebM). The video will be loaded into the browser.</li>
+                <li><strong>2. Process:</strong> Click "Process Video" to analyze the video. The AI (YOLOv8-Pose) detects body keypoints in each frame.</li>
+                <li><strong>3. View Results:</strong> Four visualizations are generated:
+                    <ul style="margin-top: 8px;">
+                        <li><strong>Video + Overlay:</strong> Original video with detected skeleton overlay</li>
+                        <li><strong>Stickman:</strong> Simplified skeleton on white background</li>
+                        <li><strong>Simplified Stickman:</strong> Minimal representation (head, body, limbs)</li>
+                        <li><strong>Pixel Grid:</strong> Pixelated version mapped to 16×24 grid</li>
+                    </ul>
+                </li>
+                <li><strong>4. Customize:</strong> Adjust parameters like line width, head size, pixel threshold, and colors in real-time.</li>
+                <li><strong>5. Export:</strong> Save individual frames as PNG or record the entire animation as video.</li>
+            </ul>
+
+            <h2>Controls & Parameters</h2>
+            <ul>
+                <li><strong>Layout Mode:</strong> Switch between Sidebar (vertical) and Topbar (horizontal) canvas arrangement. Changes how canvases are displayed in the interface.</li>
+                <li><strong>Playback Speed:</strong> Control animation speed (0.25× to 2.0×). Affects video playback and frame rendering speed.</li>
+                <li><strong>Line Width (1-15px):</strong> Thickness of skeleton lines in all visualizations. <em>Affects:</em> Stickman lines, simplified stickman body thickness, and indirectly the pixel density in the final pixel grid. Thicker lines create more filled pixels.</li>
+                <li><strong>Head Size (10-30px):</strong> Diameter of the head circle. <em>Affects:</em> Head representation in stickman and simplified views, and pixel coverage in head area of pixel grid. Larger heads create more pixels.</li>
+                <li><strong>Pixel Threshold (0.1-5%):</strong> Sensitivity for detecting black pixels when converting stickman to pixel grid. <em>Lower values:</em> More pixels detected (denser figure). <em>Higher values:</em> Fewer pixels (sparser figure). This is critical for fine-tuning the pixel character appearance.</li>
+                <li><strong>Head Correction (10-200px):</strong> Manual adjustment of head position relative to detected keypoints. Useful when automatic detection places head incorrectly.</li>
+                <li><strong>Head Angle (-45° to +45°):</strong> Rotates the head orientation. Useful for correcting tilted head poses.</li>
+                <li><strong>Grid Dimensions:</strong> Customize columns (8-32), rows per block (4-12), and number of blocks (2-6). Determines pixel grid resolution. More cells = higher detail.</li>
+                <li><strong>Colors:</strong> Change pixel grid color (what color filled pixels are), stickman line color, and simplified stickman color. Visual customization only.</li>
+                <li><strong>Invert Grid:</strong> Swap black/white pixels in pixel grid. Creates negative image effect.</li>
+            </ul>
+
+            <h2>Export Options</h2>
+            <ul>
+                <li><strong>Save Frame:</strong> Export current frame as PNG</li>
+                <li><strong>Save All Frames:</strong> Download all frames as individual PNG files</li>
+                <li><strong>Export Video:</strong> Record and export animation (format depends on browser)</li>
+            </ul>
+
+            <h2>Browser Compatibility</h2>
+            <ul>
+                <li><strong>Best Format:</strong> MP4 (works on all browsers)</li>
+                <li><strong>MOV:</strong> Only Safari (Mac/iOS) supports full playback. Other browsers can process but won't show video background.</li>
+                <li><strong>WebM:</strong> Chrome, Firefox, Edge (not Safari)</li>
+            </ul>
+
+            <h2>Video Converter</h2>
+            <ul>
+                <li><strong>Purpose:</strong> Convert WebM or MP4 videos to MOV format for Mac/Safari compatibility</li>
+                <li><strong>Location:</strong> Bottom of left sidebar (collapsible section)</li>
+                <li><strong>Formats:</strong>
+                    <ul style="margin-top: 8px;">
+                        <li><strong>WebM → MOV:</strong> For Safari compatibility (WebM not supported on Mac)</li>
+                        <li><strong>MP4 → MOV:</strong> Convert MP4 to MOV if needed</li>
+                    </ul>
+                </li>
+                <li><strong>How to use:</strong>
+                    <ul style="margin-top: 8px;">
+                        <li>1. Click "Select WebM/MP4 File" and choose your video</li>
+                        <li>2. Click "Convert to MOV" to start conversion</li>
+                        <li>3. Wait for processing (shows progress in console)</li>
+                        <li>4. Download automatically starts when complete</li>
+                    </ul>
+                </li>
+                <li><strong>Note:</strong> Audio is not preserved during conversion (video only). Uses OpenCV for frame-by-frame conversion.</li>
+            </ul>
+
+            <h2>Technical Details</h2>
+            <ul>
+                <li><strong>Pose Detection:</strong> YOLOv8x-Pose model with 17 body keypoints</li>
+                <li><strong>Processing:</strong> Server-side Python (FastAPI + OpenCV + Ultralytics)</li>
+                <li><strong>Rendering:</strong> Client-side HTML5 Canvas with real-time parameter adjustment</li>
+                <li><strong>Grid Mapping:</strong> Stickman is mapped to 16×24 pixel grid (customizable)</li>
+                <li><strong>Video Conversion:</strong> OpenCV-based format conversion (WebM/MP4 to MOV, no FFmpeg required)</li>
+            </ul>
+
+            <button class="intro-modal-close" id="infoModalExtendedClose">Close</button>
+        </div>
+    </div>
+
+    <!-- Support Modal -->
+    <div class="intro-modal info-modal-extended" id="supportModal" style="display: none;">
+        <div class="intro-modal-content">
+            <h1>Support & Contact</h1>
+            
+            <p style="margin-bottom: 30px;">
+                Need help or have questions? We're here to assist you with DancePixel.
+            </p>
+
+            <h2>Email Support</h2>
+            <p style="margin-bottom: 20px;">
+                <strong>Email:</strong> <a href="mailto:support@dancepixel.com" style="color: #000; text-decoration: underline;">support@dancepixel.com</a>
+            </p>
+
+            <h2>Common Issues</h2>
+            <ul>
+                <li><strong>Video not loading:</strong> Make sure you're using MP4 format for best compatibility</li>
+                <li><strong>Processing takes long:</strong> Large videos or high FPS require more time. Server shows progress in console.</li>
+                <li><strong>No pose detected:</strong> Ensure person is clearly visible and in frame. Try adjusting camera angle.</li>
+                <li><strong>Pixel grid empty:</strong> Check "Pixel Threshold" parameter - lower values detect more pixels</li>
+                <li><strong>Remote access not working:</strong> Make sure you're using the ngrok URL, not localhost</li>
+            </ul>
+
+            <h2>Feature Requests</h2>
+            <p>
+                Have ideas for new features? Send us your suggestions at the email above!
+            </p>
+
+            <button class="intro-modal-close" id="supportModalClose">Close</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Topbar (hidden by default) -->
+        <div class="canvas-topbar expanded" id="canvasTopbar">
+            <button class="topbar-toggle" id="topbarToggle">▼ Hide Canvas Preview</button>
+            <div class="topbar-canvas-row" id="topbarCanvasRow">
+                <div class="canvas-wrapper">
+                    <div class="canvas-label">Video + Overlay</div>
+                    <canvas id="videoCanvasTopbar" width="640" height="480"></canvas>
+                </div>
+                <div class="canvas-wrapper">
+                    <div class="canvas-label">Stickman</div>
+                    <canvas id="stickmanCanvasTopbar" width="640" height="480"></canvas>
+                </div>
+                <div class="canvas-wrapper">
+                    <div class="canvas-label">Simplified Stickman</div>
+                    <canvas id="simplifiedCanvasTopbar" width="640" height="480"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Video Upload -->
+            <div>
+                <div class="section-header">Video Upload</div>
+                <div class="video-drop-area" id="videoDropArea">
+                    Select Video File(s)
+                </div>
+                <input type="file" id="videoInput" accept="video/*" multiple style="display: none;">
+            </div>
+
+            <!-- Video Queue -->
+            <div id="videoQueueSection" style="display: none;">
+                <div class="section-header">Video Queue (<span id="queueCount">0</span>)</div>
+                <div id="videoQueue" class="video-queue"></div>
+            </div>
+
+            <!-- Server Status -->
+            <div>
+                <div class="section-header">Server Status</div>
+                <div class="status" id="serverStatus">Disconnected</div>
+            </div>
+
+            <!-- Processing Parameters -->
+            <div style="margin-bottom: 15px;">
+                <div class="canvas-section">
+                    <div class="canvas-section-header" id="parameterSectionHeader">
+                        <span>Processing Parameters</span>
+                        <span class="canvas-section-arrow open">▼</span>
+                    </div>
+                    <div class="canvas-section-content active" id="parameterSectionContent">
+                        <div class="input-group">
+                            <label>Line Width: <span id="lineWidthValue">6</span>px</label>
+                            <input type="range" id="lineWidthSlider" min="1" max="15" value="6" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Head Size: <span id="headSizeValue">18</span>px</label>
+                            <input type="range" id="headSizeSlider" min="10" max="30" value="18" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Pixel Threshold: <span id="thresholdValue">1.0</span>%</label>
+                            <input type="range" id="thresholdSlider" min="0.1" max="5.0" value="1.0" step="0.1">
+                        </div>
+                        <div class="input-group" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="headCorrectionToggle" style="width: auto;">
+                                <span>Head Position Correction</span>
+                            </label>
+                        </div>
+                        <div class="input-group" id="headDistanceGroup" style="display: none;">
+                            <label>Min Distance from Shoulders: <span id="headDistanceValue">30</span>px</label>
+                            <input type="range" id="headDistanceSlider" min="10" max="200" value="30" step="5">
+                        </div>
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label>Head Angle: <span id="headAngleValue">0</span>°</label>
+                            <input type="range" id="headAngleSlider" min="-45" max="45" value="0" step="1">
+                        </div>
+                        <div class="info-box" style="margin-top: 10px;">
+                            <strong>Line Width:</strong> Thickness of stickman lines<br>
+                            <strong>Head Size:</strong> Radius of head circle<br>
+                            <strong>Pixel Threshold:</strong> Sensitivity for grid detection (lower = more sensitive)<br>
+                            <strong>Head Position Correction:</strong> Prevents head from being too far forward (useful when nose/eyes are detected far from body)<br>
+                            <strong>Head Angle:</strong> Rotates head around shoulder axis (-45° to +45°)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Process Button -->
+            <button id="processBtn" disabled>Process Video</button>
+
+            <!-- Progress -->
+            <div id="progressSection" style="display: none;">
+                <div class="section-header">Processing</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar">0%</div>
+                </div>
+            </div>
+
+            <!-- Playback Controls -->
+            <div id="playbackSection" style="display: none;">
+                <div class="section-header">Playback</div>
+                <div class="controls">
+                    <button id="playBtn">Play</button>
+                    <button id="stopBtn">Stop</button>
+                </div>
+                
+                <div class="controls" style="margin-top: 10px;">
+                    <button id="prevFrameBtn">◀ Prev Frame</button>
+                    <button id="nextFrameBtn">Next Frame ▶</button>
+                </div>
+                
+                <div class="input-group">
+                    <label>Frame: <span id="frameDisplay">0 / 0</span></label>
+                    <input type="range" id="frameSlider" min="0" max="0" value="0">
+                </div>
+                
+                <div class="input-group">
+                    <label>Playback Speed: <span id="playbackSpeedValue">1.0x</span></label>
+                    <input type="range" id="playbackSpeedSlider" min="0.25" max="2" step="0.25" value="1">
+                </div>
+                
+                <div class="section-header" style="margin-top: 20px;">Layout Mode</div>
+                <div style="margin-bottom: 15px;">
+                    <div class="input-group">
+                        <label>Canvas Position</label>
+                        <select id="layoutModeSelect" style="width: 100%; padding: 8px; border: 1px solid #000; font-family: 'DEM-MOMono-300', monospace;">
+                            <option value="sidebar">Sidebar (Canvas rechts)</option>
+                            <option value="topbar">Topbar (Canvas oben)</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="topbarToggleGroup" style="display: none;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="topbarVisibleToggle" style="width: auto;" checked>
+                            <span>Show Canvas Bar</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="section-header" style="margin-top: 20px;">ngrok Tunnel</div>
+                <div class="canvas-section" style="margin-bottom: 15px;">
+                    <div class="canvas-section-header" id="ngrokSectionHeader">
+                        <span>Share Online</span>
+                        <span class="canvas-section-arrow">▶</span>
+                    </div>
+                    <div class="canvas-section-content" id="ngrokSectionContent">
+                        <div class="input-group">
+                            <label>Auth Token</label>
+                            <input type="text" id="ngrokAuthToken" value="2xXecEA6QM79V71HAVNmAtCdYYS_7X4cebWBwRA5Q7R854nPM" style="width: 100%; padding: 8px; border: 1px solid #000; font-family: 'DEM-MOMono-300', monospace; font-size: 11px;">
+                        </div>
+                        <div class="info-box" style="margin-top: 10px; background: #fff3cd; border: 1px solid #ffc107;">
+                            <strong>⚠️ Setup Schritte:</strong><br><br>
+                            
+                            <strong>0a. ngrok installieren (falls nicht vorhanden):</strong><br>
+                            <code id="ngrokInstallCmd" style="display: block; background: #000; color: #0f0; padding: 5px; margin: 5px 0; font-size: 11px;">winget install Ngrok.Ngrok</code>
+                            <button id="copyInstallCmd" style="width: 100%; margin-bottom: 5px;">Copy Install Command</button>
+                            
+                            <strong>0b. ngrok updaten (falls Version &lt; 3.19.0):</strong><br>
+                            <code id="ngrokUpdateCmd" style="display: block; background: #000; color: #0f0; padding: 5px; margin: 5px 0; font-size: 11px;">ngrok update</code>
+                            <button id="copyUpdateCmd" style="width: 100%; margin-bottom: 5px;">Copy Update Command</button>
+                            <em style="font-size: 11px; color: #d9534f;">⚠️ Nach Installation/Update: PowerShell SCHLIESSEN und NEU ÖFFNEN!</em><br>
+                            <em style="font-size: 11px;">Alternative: <a href="https://ngrok.com/download" target="_blank" style="color: #0066cc;">ngrok.com/download</a> (ZIP entpacken → zu PATH hinzufügen)</em><br><br>
+                            
+                            <strong>1. Auth Token konfigurieren (einmalig):</strong><br>
+                            <code id="ngrokAuthCmd" style="display: block; background: #000; color: #0f0; padding: 5px; margin: 5px 0; font-size: 11px; word-break: break-all;">ngrok config add-authtoken 2xXecEA6QM79V71HAVNmAtCdYYS_7X4cebWBwRA5Q7R854nPM</code>
+                            <button id="copyAuthCmd" style="width: 100%; margin-bottom: 10px;">Copy Auth Command</button>
+                            
+                            <strong>2a. HTML-Server starten (Terminal 2):</strong><br>
+                            <code id="pythonServerCmd" style="display: block; background: #000; color: #0f0; padding: 5px; margin: 5px 0; font-size: 11px;">cd C:\Users\Labor\Desktop\Emil_Projekt\DancePixel
+python -m http.server 8000</code>
+                            <button id="copyPythonServerCmd" style="width: 100%; margin-bottom: 10px;">Copy Server Command</button>
+                            <em style="font-size: 11px;">⚠️ Muss laufen bleiben! Zeigt: "Serving HTTP on :: port 8000..."</em><br><br>
+                            
+                            <strong>2b. ngrok Tunnel starten (Terminal 3):</strong><br>
+                            <code id="ngrokHttpCmd" style="display: block; background: #000; color: #0f0; padding: 5px; margin: 5px 0; font-size: 11px;">ngrok http 8000</code>
+                            <button id="copyHttpCmd" style="width: 100%;">Copy Tunnel Command</button>
+                            <em style="font-size: 11px;">Kopiere die "Forwarding" URL (https://...ngrok-free.app) und füge sie unten ein!</em><br><br>
+                            
+                            <strong>⚠️ Wichtig für volle Funktionalität:</strong><br>
+                            <em style="font-size: 11px;">
+                            • pose_server.py muss weiter auf Port 5000 laufen (Terminal 1)<br>
+                            • python http.server auf Port 8000 (Terminal 2)<br>
+                            • ngrok tunnel auf Port 8000 (Terminal 3)<br>
+                            • Externe Nutzer können Videos NICHT verarbeiten (nur lokal möglich)<br>
+                            • Sie sehen aber deine Seite und können exportierte Daten sehen<br>
+                            </em>
+                        </div>
+                        <div class="input-group" style="margin-top: 10px;">
+                            <label>Tunnel URL (paste from ngrok)</label>
+                            <input type="text" id="ngrokUrl" placeholder="https://xxxx-xx-xxx-xxx-xx.ngrok-free.app" style="width: 100%; padding: 8px; border: 1px solid #000; font-family: 'DEM-MOMono-300', monospace; font-size: 11px;">
+                            <button id="openNgrokUrl" style="width: 100%; margin-top: 5px;" disabled>Open Tunnel URL</button>
+                        </div>
+                        <div id="ngrokStatus" style="margin-top: 10px; padding: 8px; background: #f0f0f0; border: 1px solid #ccc; display: none;">
+                            <strong>Status:</strong> <span id="ngrokStatusText">-</span><br>
+                            <strong>URL:</strong> <a id="ngrokStatusLink" href="#" target="_blank" style="color: #0066cc; word-break: break-all;">-</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-header" style="margin-top: 20px;">Export Options</div>
+                <div id="canvasExportButtons"></div>
+                
+                <div class="section-header" style="margin-top: 20px;">Grid Options</div>
+                <div class="canvas-section">
+                    <div class="canvas-section-header" id="gridOptionsSectionHeader">
+                        <span>Grid Dimensions</span>
+                        <span class="canvas-section-arrow open">▼</span>
+                    </div>
+                    <div class="canvas-section-content active" id="gridOptionsSectionContent">
+                        <div class="input-group">
+                            <label>Pixel Grid Color</label>
+                            <select id="pixelGridColorSelect" style="width: 100%; padding: 8px; border: 1px solid #000; font-family: 'DEM-MOMono-300', monospace;">
+                                <option value="#000000">Black</option>
+                                <option value="#ff0000">Red</option>
+                                <option value="#00ff00">Green</option>
+                                <option value="#0000ff">Blue</option>
+                                <option value="#ff00ff">Magenta</option>
+                                <option value="#00ffff">Cyan</option>
+                                <option value="#ffff00">Yellow</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="invertGridToggle" style="width: auto;">
+                                <span>Invert Grid (Black ↔ White)</span>
+                            </label>
+                        </div>
+                        <div class="input-group">
+                            <label>Stickman Colors</label>
+                            <select id="stickmanColorSelect" style="width: 100%; padding: 8px; border: 1px solid #000; font-family: 'DEM-MOMono-300', monospace; margin-bottom: 5px;">
+                                <option value="#000000">Black</option>
+                                <option value="#ff0000">Red</option>
+                                <option value="#0000ff">Blue</option>
+                                <option value="#00ff00">Green</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Columns: <span id="gridColsValue">16</span></label>
+                            <input type="range" id="gridColsSlider" min="8" max="32" value="16" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Rows per Block: <span id="rowsPerBlockValue">6</span></label>
+                            <input type="range" id="rowsPerBlockSlider" min="4" max="12" value="6" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Number of Blocks: <span id="blocksCountValue">4</span></label>
+                            <input type="range" id="blocksCountSlider" min="2" max="6" value="4" step="1">
+                        </div>
+                        <div class="info-box" style="margin-top: 10px;">
+                            <strong>Total Rows:</strong> <span id="totalRowsDisplay">24</span> (Rows per Block × Blocks)<br>
+                            <strong>Total Cells:</strong> <span id="totalCellsDisplay">384</span> (Columns × Total Rows)<br>
+                            <em>Note: Adjust these values after processing to change grid resolution</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div>
+                <div class="section-header">Info</div>
+                <div class="info-box" id="infoBox">
+                    <strong>Status:</strong> No video loaded<br>
+                    <strong>Frames:</strong> 0<br>
+                    <strong>FPS:</strong> -<br>
+                    <strong>Resolution:</strong> -
+                </div>
+            </div>
+
+            <!-- Video Converter -->
+            <div>
+                <div class="canvas-section">
+                    <div class="canvas-section-header" id="converterSectionHeader">
+                        <span>Video Converter</span>
+                        <span class="canvas-section-arrow">▼</span>
+                    </div>
+                    <div class="canvas-section-content" id="converterSectionContent">
+                        <!-- WebM to MOV -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-family: 'DEM-MOMono-400', monospace; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+                                WebM → MOV
+                            </div>
+                            <label style="font-size: 12px; line-height: 1.4; margin-bottom: 8px; display: block;">
+                                For Mac/Safari compatibility
+                            </label>
+                            <input type="file" id="converterInputWebM" accept=".webm" style="display: none;">
+                            <button id="converterSelectBtnWebM" style="width: 100%; padding: 10px; background: #000; color: #fff; border: none; cursor: pointer; font-family: 'DEM-MOMono-400', monospace; margin-bottom: 5px;">
+                                Select WebM File
+                            </button>
+                            <div id="converterStatusWebM" style="font-size: 12px; color: #666; margin-top: 5px;"></div>
+                            <button id="converterConvertBtnWebM" style="width: 100%; padding: 10px; background: #666; color: #fff; border: none; cursor: not-allowed; font-family: 'DEM-MOMono-400', monospace; margin-top: 5px;" disabled>
+                                Convert to MOV
+                            </button>
+                        </div>
+
+                        <!-- MP4 to MOV -->
+                        <div>
+                            <div style="font-family: 'DEM-MOMono-400', monospace; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+                                MP4 → MOV
+                            </div>
+                            <label style="font-size: 12px; line-height: 1.4; margin-bottom: 8px; display: block;">
+                                Convert MP4 to MOV format
+                            </label>
+                            <input type="file" id="converterInputMP4" accept=".mp4" style="display: none;">
+                            <button id="converterSelectBtnMP4" style="width: 100%; padding: 10px; background: #000; color: #fff; border: none; cursor: pointer; font-family: 'DEM-MOMono-400', monospace; margin-bottom: 5px;">
+                                Select MP4 File
+                            </button>
+                            <div id="converterStatusMP4" style="font-size: 12px; color: #666; margin-top: 5px;"></div>
+                            <button id="converterConvertBtnMP4" style="width: 100%; padding: 10px; background: #666; color: #fff; border: none; cursor: not-allowed; font-family: 'DEM-MOMono-400', monospace; margin-top: 5px;" disabled>
+                                Convert to MOV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug Log -->
+            <div>
+                <div class="section-header">Debug Log</div>
+                <div class="info-box" id="debugLog" style="max-height: 200px; overflow-y: auto; font-size: 10px;">
+                    Waiting for input...
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Display -->
+        <div class="video-display">
+            <!-- Pixelgrid Main (left) -->
+            <div class="pixelgrid-main">
+                <div class="canvas-wrapper">
+                    <div class="canvas-label">Pixel Grid (16×24)</div>
+                    <canvas id="pixelGridCanvas" width="650" height="520"></canvas>
+                </div>
+            </div>
+            
+            <!-- Canvas Sidebar (right) -->
+            <div class="canvas-sidebar-right">
+                <div class="canvas-wrapper">
+                    <div class="canvas-label">Video + Overlay</div>
+                    <canvas id="videoCanvas" width="640" height="480"></canvas>
+                </div>
+                <div class="canvas-wrapper">
+                    <div class="canvas-label">Stickman Only (16×24 Grid)</div>
+                    <canvas id="stickmanCanvas" width="640" height="480"></canvas>
+                </div>
+                <div class="canvas-wrapper">
+                    <div class="canvas-label">Simplified Stickman</div>
+                    <canvas id="simplifiedCanvas" width="640" height="480"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        const Config = {
+            server: {
+                // Auto-detect if we're accessing via ngrok or localhost
+                url: (() => {
+                    // If accessed via ngrok (https), use same origin
+                    if (window.location.protocol === 'https:') {
+                        return window.location.origin;
+                    }
+                    // Otherwise use localhost
+                    return 'http://localhost:5000';
+                })(),
+                wsUrl: (() => {
+                    // If accessed via ngrok (https), use wss://
+                    if (window.location.protocol === 'https:') {
+                        return `wss://${window.location.host}/ws/pose`;
+                    }
+                    // Otherwise use ws://localhost
+                    return 'ws://localhost:5000/ws/pose';
+                })()
+            },
+            canvas: {
+                width: 640,
+                height: 480
+            }
+        };
+        
+        // Log detected configuration
+        console.log('🌐 Server Config:', {
+            url: Config.server.url,
+            wsUrl: Config.server.wsUrl,
+            protocol: window.location.protocol,
+            host: window.location.host
+        });
+
+        // ==========================================
+        // CANVAS CONFIGURATION (für modulare Verwaltung)
+        // ==========================================
+        const CanvasConfig = [
+            {
+                id: 'videoCanvas',
+                name: 'Video + Overlay',
+                contextKey: 'videoCtx'
+            },
+            {
+                id: 'stickmanCanvas',
+                name: 'Stickman',
+                contextKey: 'stickmanCtx'
+            },
+            {
+                id: 'simplifiedCanvas',
+                name: 'Simplified',
+                contextKey: 'simplifiedCtx'
+            },
+            {
+                id: 'pixelGridCanvas',
+                name: 'PixelGrid',
+                contextKey: 'pixelGridCtx'
+            }
+        ];
+
+        // ==========================================
+        // STATE
+        // ==========================================
+        const State = {
+            video: null,
+            videoFile: null,
+            poseData: null,
+            currentFrame: 0,
+            isPlaying: false,
+            playInterval: null,
+            isServerConnected: false,
+            websocket: null,
+            videoCanvas: null,
+            videoCtx: null,
+            stickmanCanvas: null,
+            stickmanCtx: null,
+            simplifiedCanvas: null,
+            simplifiedCtx: null,
+            pixelGridCanvas: null,
+            pixelGridCtx: null,
+            // Multi-Video Queue System
+            userSession: null,
+            videoJobs: [],  // List of video jobs
+            selectedJobId: null,  // Currently selected job
+            pollingInterval: null,  // For status updates
+            // Pixelmann generation parameters
+            stickmanLineWidth: 6,
+            stickmanHeadSize: 18,
+            pixelThreshold: 0.01,  // 1%
+            headPositionCorrection: false,  // Enable head position correction
+            headMinDistance: 30,  // Minimum distance from shoulders in pixels
+            headAngle: 0,  // Neck/head rotation angle in degrees (around shoulder axis)
+            // Grid dimensions (adjustable after processing)
+            gridCols: 16,
+            gridRows: 24,
+            blocksCount: 4,
+            rowsPerBlock: 6,
+            // Visual settings
+            invertGrid: false,  // Invert black/white in pixel grid
+            currentLayout: 'sidebar',  // 'sidebar' or 'topbar'
+            topbarVisible: true,  // For topbar layout
+            playbackSpeed: 1.0,  // Video playback speed multiplier
+            // Color palettes
+            pixelGridColor: '#000000',
+            stickmanColor: '#000000',
+            simplifiedStickmanColor: '#000000',
+            
+            // ngrok
+            ngrokAuthToken: '2xXecEA6QM79V71HAVNmAtCdYYS_7X4cebWBwRA5Q7R854nPM',
+            ngrokUrl: ''
+        };
+
+        // ==========================================
+        // LOGGER MODULE
+        // ==========================================
+        const Logger = {
+            log(message, type = 'info') {
+                const debugLog = document.getElementById('debugLog');
+                const timestamp = new Date().toLocaleTimeString();
+                const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+                const line = `[${timestamp}] ${prefix} ${message}`;
+                
+                console.log(line);
+                
+                const newLine = document.createElement('div');
+                newLine.textContent = line;
+                if (type === 'error') newLine.style.color = 'red';
+                if (type === 'success') newLine.style.color = 'green';
+                
+                debugLog.appendChild(newLine);
+                debugLog.scrollTop = debugLog.scrollHeight;
+            }
+        };
+
+        // ==========================================
+        // SERVER MODULE
+        // ==========================================
+        const ServerModule = {
+            connect() {
+                Logger.log('Connecting to server...');
+                
+                State.websocket = new WebSocket(Config.server.wsUrl);
+
+                State.websocket.onopen = () => {
+                    State.isServerConnected = true;
+                    document.getElementById('serverStatus').textContent = 'Connected';
+                    document.getElementById('serverStatus').className = 'status connected';
+                    Logger.log('Server connected', 'success');
+                    this.updateUI();
+                };
+
+                State.websocket.onclose = () => {
+                    State.isServerConnected = false;
+                    document.getElementById('serverStatus').textContent = 'Disconnected';
+                    document.getElementById('serverStatus').className = 'status';
+                    Logger.log('Server disconnected', 'error');
+                    this.updateUI();
+                };
+
+                State.websocket.onerror = (error) => {
+                    Logger.log('WebSocket error', 'error');
+                };
+            },
+
+            updateUI() {
+                const processBtn = document.getElementById('processBtn');
+                processBtn.disabled = !State.videoFile || !State.isServerConnected;
+            }
+        };
+
+        // ==========================================
+        // VIDEO MODULE
+        // ==========================================
+        const VideoModule = {
+            loadFile(file) {
+                if (!file.type.startsWith('video/')) {
+                    alert('Please upload a video file!');
+                    return;
+                }
+
+                Logger.log(`Loading video: ${file.name}`);
+                
+                // Check video format compatibility
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                const isMOV = fileExt === 'mov';
+                const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+                
+                if (isMOV && !isSafari) {
+                    Logger.log('⚠️ MOV format detected on non-Safari browser', 'info');
+                    Logger.log('Video playback may not work. MP4 recommended for maximum compatibility.', 'info');
+                    alert('⚠️ MOV Format Warning\n\n' +
+                          'Your browser may not support MOV playback.\n' +
+                          'The video will be processed, but video frames may not display.\n\n' +
+                          '✅ Pose detection will still work!\n' +
+                          '📌 For best results, use MP4 format.');
+                }
+                
+                State.videoFile = file;
+                const url = URL.createObjectURL(file);
+
+                // Create video element
+                State.video = document.createElement('video');
+                State.video.src = url;
+                State.video.controls = false;
+                State.video.loop = false;
+                State.video.muted = true;
+                State.video.preload = 'auto';
+                
+                Logger.log('Video element created, waiting for load...');
+
+                // Multiple event handlers to debug loading
+                State.video.addEventListener('loadstart', () => {
+                    Logger.log('Video: loadstart event', 'info');
+                });
+                
+                State.video.addEventListener('loadedmetadata', () => {
+                    Logger.log(`Video: loadedmetadata - ${State.video.videoWidth}x${State.video.videoHeight}, ${State.video.duration.toFixed(2)}s, readyState=${State.video.readyState}`, 'success');
+                    
+                    // Set canvas sizes for 1:1 grid mapping
+                    const gridWidth = 640;  // 16 columns × 40px
+                    const gridHeight = 480; // 24 rows × 20px
+                    
+                    State.videoCanvas.width = gridWidth;
+                    State.videoCanvas.height = gridHeight;
+                    State.stickmanCanvas.width = gridWidth;
+                    State.stickmanCanvas.height = gridHeight;
+                    State.simplifiedCanvas.width = gridWidth;
+                    State.simplifiedCanvas.height = gridHeight;
+                    // Pixelgrid has different dimensions (650×520)
+                    State.pixelGridCanvas.width = 650;
+                    State.pixelGridCanvas.height = 520;
+                    
+                    Logger.log(`Canvas resized to ${gridWidth}×${gridHeight}`, 'success');
+                    Logger.log(`Pixelgrid canvas: 650×520`, 'success');
+                    
+                    document.getElementById('videoDropArea').classList.add('has-video');
+                    ServerModule.updateUI();
+                });
+                
+                State.video.addEventListener('loadeddata', () => {
+                    Logger.log(`Video: loadeddata - readyState=${State.video.readyState} (HAVE_CURRENT_DATA)`, 'success');
+                    
+                    // Seek to 0.1s instead of 0s for better frame availability
+                    Logger.log('Seeking to 0.1s for preview...');
+                    State.video.currentTime = 0.1;
+                });
+                
+                let hasDrawnPreview = false;
+                State.video.addEventListener('seeked', () => {
+                    if (hasDrawnPreview) return; // Only draw once
+                    
+                    Logger.log(`Video: seeked to ${State.video.currentTime.toFixed(3)}s, readyState=${State.video.readyState}`, 'info');
+                    
+                    if (State.video.readyState >= 2) {
+                        hasDrawnPreview = true;
+                        this.showVideoPreview();
+                    } else {
+                        Logger.log(`Video not ready yet: readyState=${State.video.readyState}`, 'error');
+                    }
+                });
+                
+                State.video.addEventListener('error', (e) => {
+                    const errorMsg = State.video.error?.message || 'Unknown error';
+                    Logger.log(`❌ Video error: ${errorMsg}`, 'error');
+                    Logger.log(`Video format may not be supported by this browser`, 'error');
+                    Logger.log(`You can still process the video - pose detection will work!`, 'info');
+                    
+                    // Mark that video is not playable but still allow processing
+                    State.videoPlaybackSupported = false;
+                    document.getElementById('videoDropArea').classList.add('has-video');
+                    ServerModule.updateUI();
+                });
+                
+                // Track if video playback is supported
+                State.videoPlaybackSupported = true;
+                
+                // Start loading
+                State.video.load();
+                Logger.log('Video.load() called');
+            },
+            
+            showVideoPreview() {
+                if (!State.video || State.video.readyState < 2) {
+                    Logger.log(`Cannot show preview: readyState=${State.video?.readyState}`, 'error');
+                    return;
+                }
+                
+                Logger.log(`Attempting to draw video preview... readyState=${State.video.readyState}, currentTime=${State.video.currentTime.toFixed(3)}`);
+                
+                try {
+                    const vCtx = State.videoCtx;
+                    const vCanvas = State.videoCanvas;
+                    
+                    // Log video properties
+                    Logger.log(`Video properties: ${State.video.videoWidth}x${State.video.videoHeight}, duration=${State.video.duration.toFixed(2)}s`);
+                    
+                    // Clear canvas with a test color first
+                    vCtx.fillStyle = '#FF0000'; // Red for testing
+                    vCtx.fillRect(0, 0, vCanvas.width, vCanvas.height);
+                    Logger.log('Canvas cleared with red (test)');
+                    
+                    // Wait a moment, then draw black background
+                    setTimeout(() => {
+                        vCtx.fillStyle = '#000000';
+                        vCtx.fillRect(0, 0, vCanvas.width, vCanvas.height);
+                        
+                        // Calculate scaling
+                        const videoAspect = State.video.videoWidth / State.video.videoHeight;
+                        const canvasAspect = vCanvas.width / vCanvas.height;
+                        
+                        let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                        
+                        if (videoAspect > canvasAspect) {
+                            drawWidth = vCanvas.width;
+                            drawHeight = vCanvas.width / videoAspect;
+                            offsetY = (vCanvas.height - drawHeight) / 2;
+                        } else {
+                            drawHeight = vCanvas.height;
+                            drawWidth = vCanvas.height * videoAspect;
+                            offsetX = (vCanvas.width - drawWidth) / 2;
+                        }
+                        
+                        Logger.log(`Drawing video: srcSize=${State.video.videoWidth}x${State.video.videoHeight}, destOffset=(${offsetX.toFixed(1)},${offsetY.toFixed(1)}), destSize=${drawWidth.toFixed(1)}x${drawHeight.toFixed(1)}`);
+                        
+                        // Draw video
+                        vCtx.drawImage(State.video, 0, 0, State.video.videoWidth, State.video.videoHeight, 
+                                      offsetX, offsetY, drawWidth, drawHeight);
+                        
+                        // Check multiple pixel positions
+                        const samples = [
+                            {x: vCanvas.width/2, y: vCanvas.height/2, name: 'center'},
+                            {x: offsetX + drawWidth/2, y: offsetY + drawHeight/2, name: 'video-center'},
+                            {x: offsetX + 10, y: offsetY + 10, name: 'top-left'},
+                            {x: offsetX + drawWidth - 10, y: offsetY + drawHeight - 10, name: 'bottom-right'}
+                        ];
+                        
+                        let hasColor = false;
+                        samples.forEach(sample => {
+                            const imgData = vCtx.getImageData(sample.x, sample.y, 1, 1);
+                            const sum = imgData.data[0] + imgData.data[1] + imgData.data[2];
+                            Logger.log(`Pixel ${sample.name}: R=${imgData.data[0]}, G=${imgData.data[1]}, B=${imgData.data[2]}`);
+                            if (sum > 0) hasColor = true;
+                        });
+                        
+                        if (!hasColor) {
+                            Logger.log('❌ ERROR: All sampled pixels are black!', 'error');
+                            Logger.log('⚠️ Your video codec (.mov) might not be supported by the browser!', 'error');
+                            Logger.log('🔄 Try converting to MP4 (H.264) format or use a different browser', 'error');
+                            
+                            // Show warning on canvas
+                            vCtx.fillStyle = '#ff0000';
+                            vCtx.font = '16px Arial';
+                            vCtx.fillText('Video codec not supported!', 50, vCanvas.height/2 - 10);
+                            vCtx.fillText('Convert to MP4 (H.264)', 50, vCanvas.height/2 + 10);
+                        } else {
+                            Logger.log('✓ Video preview drawn successfully!', 'success');
+                        }
+                    }, 50);
+                    
+                } catch (e) {
+                    Logger.log(`✗ Error drawing preview: ${e.message}`, 'error');
+                    console.error(e);
+                }
+            },
+
+            async uploadMultipleVideos(files) {
+                if (!State.userSession) {
+                    State.userSession = this.generateSessionId();
+                    Logger.log(`Generated user session: ${State.userSession}`, 'success');
+                }
+
+                Logger.log(`Uploading ${files.length} video(s)...`);
+
+                // Show queue section immediately
+                document.getElementById('videoQueueSection').style.display = 'block';
+
+                for (const file of files) {
+                    await this.uploadSingleVideo(file);
+                }
+
+                // Start polling for updates
+                VideoQueueModule.startPolling();
+            },
+
+            async uploadSingleVideo(file) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    // Send user_session as query parameter instead of form data
+                    const url = `${Config.server.url}/upload?user_session=${State.userSession}`;
+
+                    Logger.log(`Uploading: ${file.name}`);
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    console.log('Upload response:', result);  // Debug
+
+                    if (result.success) {
+                        Logger.log(`✅ ${file.name} queued (Job ID: ${result.job_id})`, 'success');
+                        
+                        // Add to local job list
+                        State.videoJobs.push({
+                            job_id: result.job_id,
+                            filename: file.name,
+                            status: 'queued',
+                            progress: 0,
+                            file: file  // Store file for video loading
+                        });
+
+                        // Update UI immediately
+                        VideoQueueModule.updateUI();
+                    } else {
+                        Logger.log(`❌ Failed to upload ${file.name}`, 'error');
+                    }
+                } catch (error) {
+                    Logger.log(`❌ Upload error: ${error.message}`, 'error');
+                    console.error('Upload error:', error);
+                }
+            },
+
+            generateSessionId() {
+                return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            },
+
+            async processWithServer() {
+                // Old single video processing - keep for compatibility
+                // But redirect to multi-upload system
+                if (State.videoFile) {
+                    await this.uploadMultipleVideos([State.videoFile]);
+                }
+            },
+
+            updateInfo() {
+                const infoBox = document.getElementById('infoBox');
+                const metadata = State.poseData?.metadata || {};
+                
+                infoBox.innerHTML = `
+                    <strong>Status:</strong> Processed<br>
+                    <strong>Frames:</strong> ${State.poseData.frames.length}<br>
+                    <strong>FPS:</strong> ${metadata.fps || 30}<br>
+                    <strong>Resolution:</strong> ${metadata.width || '?'}x${metadata.height || '?'}
+                `;
+            }
+        };
+
+        // ==========================================
+        // VIDEO QUEUE MODULE (Multi-Video Management)
+        // ==========================================
+        const VideoQueueModule = {
+            startPolling() {
+                if (State.pollingInterval) {
+                    clearInterval(State.pollingInterval);
+                }
+
+                // Poll every 2 seconds
+                State.pollingInterval = setInterval(() => {
+                    this.updateJobStatuses();
+                }, 2000);
+
+                // Immediate update
+                this.updateJobStatuses();
+            },
+
+            stopPolling() {
+                if (State.pollingInterval) {
+                    clearInterval(State.pollingInterval);
+                    State.pollingInterval = null;
+                }
+            },
+
+            async updateJobStatuses() {
+                // Check status for all jobs that are not completed
+                for (const job of State.videoJobs) {
+                    if (job.status !== 'completed' && job.status !== 'failed') {
+                        try {
+                            const response = await fetch(`${Config.server.url}/job-status/${job.job_id}`);
+                            const data = await response.json();
+
+                            // Update job in list
+                            job.status = data.status;
+                            job.progress = data.progress || 0;
+                            job.error = data.error;
+
+                            // If completed, store result
+                            if (data.status === 'completed' && data.result) {
+                                job.result = data.result;
+                                Logger.log(`✅ ${job.filename} processing completed!`, 'success');
+                            }
+
+                            if (data.status === 'failed') {
+                                Logger.log(`❌ ${job.filename} processing failed: ${data.error}`, 'error');
+                            }
+                        } catch (error) {
+                            Logger.log(`Failed to check status for ${job.filename}`, 'error');
+                        }
+                    }
+                }
+
+                this.updateUI();
+
+                // Stop polling if all jobs are done
+                const allDone = State.videoJobs.every(job => 
+                    job.status === 'completed' || job.status === 'failed'
+                );
+                if (allDone && State.videoJobs.length > 0) {
+                    this.stopPolling();
+                }
+            },
+
+            updateUI() {
+                const queueSection = document.getElementById('videoQueueSection');
+                const queueContainer = document.getElementById('videoQueue');
+                const queueCount = document.getElementById('queueCount');
+
+                if (State.videoJobs.length === 0) {
+                    queueSection.style.display = 'none';
+                    return;
+                }
+
+                queueSection.style.display = 'block';
+                queueCount.textContent = State.videoJobs.length;
+
+                // Clear and rebuild list
+                queueContainer.innerHTML = '';
+
+                State.videoJobs.forEach(job => {
+                    const item = document.createElement('div');
+                    item.className = 'video-item';
+                    item.classList.add(job.status);
+                    
+                    if (job.job_id === State.selectedJobId) {
+                        item.classList.add('selected');
+                    }
+
+                    // Status text
+                    let statusText = job.status;
+                    if (job.status === 'processing') {
+                        statusText = `Processing ${job.progress}%`;
+                    } else if (job.status === 'completed') {
+                        const frames = job.result?.metadata?.total_frames || '?';
+                        statusText = `Completed (${frames} frames)`;
+                    } else if (job.status === 'failed') {
+                        statusText = `Failed: ${job.error || 'Unknown error'}`;
+                    } else if (job.status === 'queued') {
+                        statusText = 'Queued...';
+                    }
+
+                    item.innerHTML = `
+                        <div class="video-item-name">${job.filename}</div>
+                        <div class="video-item-status">${statusText}</div>
+                        ${job.status === 'processing' ? `
+                            <div class="video-item-progress">
+                                <div class="video-item-progress-bar" style="width: ${job.progress}%"></div>
+                            </div>
+                        ` : ''}
+                    `;
+
+                    // Click to load video
+                    if (job.status === 'completed') {
+                        item.style.cursor = 'pointer';
+                        item.onclick = () => this.loadVideo(job);
+                    }
+
+                    queueContainer.appendChild(item);
+                });
+            },
+
+            async loadVideo(job) {
+                if (!job.result) {
+                    Logger.log('No result data for this job', 'error');
+                    return;
+                }
+
+                Logger.log(`Loading video: ${job.filename}`);
+                State.selectedJobId = job.job_id;
+
+                // Store pose data
+                State.poseData = {
+                    frames: job.result.poses || [],
+                    metadata: job.result.metadata || {}
+                };
+
+                // Load video file into player
+                if (job.file) {
+                    VideoModule.loadFile(job.file);
+                }
+
+                // Update info box
+                VideoModule.updateInfo();
+
+                // Show playback controls
+                document.getElementById('playbackSection').style.display = 'block';
+                
+                // Setup frame slider
+                const slider = document.getElementById('frameSlider');
+                slider.max = State.poseData.frames.length - 1;
+                slider.value = 0;
+
+                // Update UI to show selection
+                this.updateUI();
+
+                // Wait for video to load then render - with better timeout handling
+                const waitForVideo = () => {
+                    return new Promise((resolve) => {
+                        if (State.video && State.video.readyState >= 2) {
+                            resolve();
+                        } else if (State.video) {
+                            const checkReady = () => {
+                                if (State.video && State.video.readyState >= 2) {
+                                    resolve();
+                                }
+                            };
+                            State.video.addEventListener('loadeddata', checkReady, { once: true });
+                            State.video.addEventListener('canplay', checkReady, { once: true });
+                            
+                            // Fallback timeout - render without video if needed
+                            setTimeout(() => {
+                                Logger.log('Video load timeout, rendering pose data only', 'info');
+                                resolve();
+                            }, 2000);
+                        } else {
+                            // No video element yet
+                            setTimeout(resolve, 100);
+                        }
+                    });
+                };
+
+                await waitForVideo();
+                
+                // Render first frame
+                CanvasModule.renderFrame(0);
+
+                // Create export buttons if not exists
+                if (!document.querySelector('.export-section')) {
+                    ExportModule.createExportButtons();
+                }
+
+                Logger.log(`✅ Loaded ${job.filename} with ${State.poseData.frames.length} frames`, 'success');
+            }
+        };
+
+        // ==========================================
+        // CANVAS MODULE
+        // ==========================================
+        const CanvasModule = {
+            initialize() {
+                State.videoCanvas = document.getElementById('videoCanvas');
+                State.videoCtx = State.videoCanvas.getContext('2d');
+                State.stickmanCanvas = document.getElementById('stickmanCanvas');
+                State.stickmanCtx = State.stickmanCanvas.getContext('2d');
+                State.simplifiedCanvas = document.getElementById('simplifiedCanvas');
+                State.simplifiedCtx = State.simplifiedCanvas.getContext('2d');
+                State.pixelGridCanvas = document.getElementById('pixelGridCanvas');
+                State.pixelGridCtx = State.pixelGridCanvas.getContext('2d');
+                Logger.log('All four canvases initialized');
+            },
+
+            renderFrame(frameIndex) {
+                if (!State.poseData || !State.poseData.frames[frameIndex]) {
+                    Logger.log('No frame data available', 'error');
+                    return;
+                }
+
+                State.currentFrame = frameIndex;
+                
+                // Update frame display
+                document.getElementById('frameDisplay').textContent = 
+                    `${frameIndex + 1} / ${State.poseData.frames.length}`;
+                document.getElementById('frameSlider').value = frameIndex;
+
+                const frameData = State.poseData.frames[frameIndex];
+                
+                // Check if video exists
+                if (!State.video) {
+                    Logger.log('No video element', 'error');
+                    return;
+                }
+                
+                // Debug video state
+                Logger.log(`renderFrame(${frameIndex}): video.readyState=${State.video.readyState}, src=${State.video.src?.substring(0, 50)}...`, 'info');
+
+                const fps = State.poseData.metadata?.fps || 30;
+                const targetTime = frameIndex / fps;
+                
+                // Function to draw everything
+                const drawFrame = () => {
+                    Logger.log(`drawFrame() called for frame ${frameIndex}`, 'info');
+                    try {
+                        // === VIDEO CANVAS (Original + YOLOv8 Overlay) ===
+                        const vCtx = State.videoCtx;
+                        const vCanvas = State.videoCanvas;
+                        
+                        Logger.log(`Canvas size: ${vCanvas.width}x${vCanvas.height}`, 'info');
+                        
+                        // Clear with black background
+                        vCtx.fillStyle = '#000000';
+                        vCtx.fillRect(0, 0, vCanvas.width, vCanvas.height);
+                        Logger.log('Video canvas cleared', 'info');
+                        
+                        let offsetX = 0, offsetY = 0, drawWidth = vCanvas.width, drawHeight = vCanvas.height;
+                        
+                        // Check if video is ready - if not, skip video draw but still draw overlay
+                        if (State.video.readyState >= 2) {
+                            Logger.log('Video is ready, drawing frame', 'info');
+                            // Calculate video scaling to fit canvas (maintain aspect)
+                            const videoAspect = State.video.videoWidth / State.video.videoHeight;
+                            const canvasAspect = vCanvas.width / vCanvas.height;
+                            
+                            if (videoAspect > canvasAspect) {
+                                // Video is wider - fit to width
+                                drawWidth = vCanvas.width;
+                                drawHeight = vCanvas.width / videoAspect;
+                                offsetY = (vCanvas.height - drawHeight) / 2;
+                            } else {
+                                // Video is taller - fit to height
+                                drawHeight = vCanvas.height;
+                                drawWidth = vCanvas.height * videoAspect;
+                                offsetX = (vCanvas.width - drawWidth) / 2;
+                            }
+                            
+                            Logger.log(`Drawing video at offset (${offsetX}, ${offsetY}), size ${drawWidth}x${drawHeight}`, 'info');
+                            
+                            // Draw video frame
+                            try {
+                                vCtx.drawImage(State.video, 0, 0, State.video.videoWidth, State.video.videoHeight, 
+                                              offsetX, offsetY, drawWidth, drawHeight);
+                                Logger.log('✅ Video frame drawn successfully', 'success');
+                            } catch (e) {
+                                Logger.log(`❌ Error drawing video: ${e.message}`, 'error');
+                            }
+                        } else {
+                            Logger.log('⚠️ Video not ready (format not supported?), drawing poses only', 'info');
+                            // Use full canvas for overlay when video not available
+                            drawWidth = vCanvas.width;
+                            drawHeight = vCanvas.height;
+                            offsetX = 0;
+                            offsetY = 0;
+                        }
+                        
+                        // Draw YOLOv8 overlay (works even without video)
+                        Logger.log(`Extracting keypoints from frameData (length: ${frameData?.length || 0})...`, 'info');
+                        const keypoints = PoseModule.extractKeypoints(frameData);
+                        Logger.log(`Keypoints extracted: ${keypoints ? 'YES, ' + (keypoints.length || 0) + ' points' : 'NO'}`, keypoints ? 'success' : 'error');
+                        if (keypoints) {
+                            Logger.log('Drawing YOLOv8 overlay...', 'info');
+                            PoseModule.drawYOLOv8Overlay(keypoints, offsetX, offsetY, drawWidth, drawHeight);
+                            
+                            // === STICKMAN CANVAS (White background + Black skeleton) ===
+                            const sCtx = State.stickmanCtx;
+                            const sCanvas = State.stickmanCanvas;
+                            
+                            Logger.log('Drawing stickman canvas...', 'info');
+                            // Clear with white background
+                            sCtx.fillStyle = '#ffffff';
+                            sCtx.fillRect(0, 0, sCanvas.width, sCanvas.height);
+                            
+                            // Draw stickman
+                            PoseModule.drawStickman(keypoints);
+                            
+                            // === SIMPLIFIED STICKMAN CANVAS ===
+                            const simpCtx = State.simplifiedCtx;
+                            const simpCanvas = State.simplifiedCanvas;
+                            
+                            simpCtx.fillStyle = '#ffffff';
+                            simpCtx.fillRect(0, 0, simpCanvas.width, simpCanvas.height);
+                            
+                            PoseModule.drawSimplifiedStickman(keypoints);
+                            
+                            // === PIXEL GRID CANVAS ===
+                            // Generate pixel grid from simplified stickman
+                            PixelGridModule.generatePixelGrid();
+                        }
+                    } catch (error) {
+                        Logger.log(`Error drawing frame: ${error.message}`, 'error');
+                    }
+                };
+
+                // Set video time
+                const currentTime = State.video.currentTime;
+                const timeDiff = Math.abs(currentTime - targetTime);
+                
+                if (timeDiff < 0.033) {
+                    // Already at correct time (within one frame at 30fps), draw immediately
+                    drawFrame();
+                } else {
+                    // Need to seek
+                    State.video.currentTime = targetTime;
+                    
+                    // Wait for video to be ready, then draw
+                    const drawWhenReady = () => {
+                        if (State.video.readyState >= 2) {
+                            drawFrame();
+                        } else {
+                            // Video still loading, draw overlay only
+                            drawFrame();
+                        }
+                    };
+                    
+                    // Give video more time to decode (50ms)
+                    setTimeout(drawWhenReady, 50);
+                }
+            }
+        };
+
+        // ==========================================
+        // POSE MODULE
+        // ==========================================
+        const PoseModule = {
+            // YOLOv8 connections
+            connections: [
+                [0, 1], [0, 2], [1, 3], [2, 4],  // Head
+                [5, 6], [5, 7], [7, 9], [6, 8], [8, 10],  // Arms
+                [5, 11], [6, 12], [11, 12],  // Torso
+                [11, 13], [13, 15], [12, 14], [14, 16]  // Legs
+            ],
+
+            // Extract keypoints (support both formats)
+            extractKeypoints(frameData) {
+                // frameData is an array of detected persons for this frame
+                // Server sends: [{keypoints: [...], bbox: [...], confidence: ...}, ...]
+                if (Array.isArray(frameData) && frameData.length > 0) {
+                    // Take first person detected
+                    return frameData[0].keypoints;
+                } else if (frameData.keypoints) {
+                    return frameData.keypoints;
+                } else if (frameData.poses && frameData.poses.length > 0) {
+                    return frameData.poses[0].keypoints;
+                }
+                return null;
+            },
+
+            // Draw YOLOv8-style overlay with bounding box and confidence
+            drawYOLOv8Overlay(keypoints, offsetX, offsetY, drawWidth, drawHeight) {
+                const ctx = State.videoCtx;
+                const scaleX = drawWidth / (State.poseData.metadata?.width || 848);
+                const scaleY = drawHeight / (State.poseData.metadata?.height || 1688);
+
+                // Calculate bounding box from keypoints
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                let avgConfidence = 0;
+                let validCount = 0;
+                
+                keypoints.forEach(kp => {
+                    if (kp && kp[2] > 0.3) {
+                        const x = kp[0] * scaleX + offsetX;
+                        const y = kp[1] * scaleY + offsetY;
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                        avgConfidence += kp[2];
+                        validCount++;
+                    }
+                });
+                
+                avgConfidence = validCount > 0 ? avgConfidence / validCount : 0;
+                
+                // Add padding to bounding box
+                const padding = 20;
+                minX -= padding;
+                minY -= padding;
+                maxX += padding;
+                maxY += padding;
+                
+                // Draw bounding box
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+                
+                // Draw label background
+                const label = `Person ${(avgConfidence * 100).toFixed(0)}%`;
+                ctx.font = '14px Arial';
+                const textWidth = ctx.measureText(label).width;
+                
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(minX, minY - 25, textWidth + 10, 25);
+                
+                // Draw label text
+                ctx.fillStyle = '#000000';
+                ctx.fillText(label, minX + 5, minY - 7);
+                
+                // Draw skeleton connections
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+
+                let drawnConnections = 0;
+                this.connections.forEach(([start, end]) => {
+                    const kpStart = keypoints[start];
+                    const kpEnd = keypoints[end];
+                    
+                    if (kpStart && kpEnd && kpStart[2] > 0.3 && kpEnd[2] > 0.3) {
+                        ctx.beginPath();
+                        ctx.moveTo(kpStart[0] * scaleX + offsetX, kpStart[1] * scaleY + offsetY);
+                        ctx.lineTo(kpEnd[0] * scaleX + offsetX, kpEnd[1] * scaleY + offsetY);
+                        ctx.stroke();
+                        drawnConnections++;
+                    }
+                });
+
+                // Draw keypoints with confidence
+                keypoints.forEach((kp, idx) => {
+                    if (kp && kp[2] > 0.3) {
+                        const x = kp[0] * scaleX + offsetX;
+                        const y = kp[1] * scaleY + offsetY;
+                        
+                        // Circle based on confidence
+                        const radius = 3 + kp[2] * 3;
+                        ctx.fillStyle = '#ff0000';
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                        ctx.fill();
+                        
+                        // White outline
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                });
+            },
+
+            // Draw simple stickman on white background
+            drawStickman(keypoints) {
+                const ctx = State.stickmanCtx;
+                const canvas = State.stickmanCanvas;
+                const scaleX = canvas.width / (State.poseData.metadata?.width || 848);
+                const scaleY = canvas.height / (State.poseData.metadata?.height || 1688);
+
+                // Use State stickman color
+                ctx.strokeStyle = State.stickmanColor;
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+
+                let drawnConnections = 0;
+                this.connections.forEach(([start, end]) => {
+                    const kpStart = keypoints[start];
+                    const kpEnd = keypoints[end];
+                    
+                    if (kpStart && kpEnd && kpStart[2] > 0.3 && kpEnd[2] > 0.3) {
+                        ctx.beginPath();
+                        ctx.moveTo(kpStart[0] * scaleX, kpStart[1] * scaleY);
+                        ctx.lineTo(kpEnd[0] * scaleX, kpEnd[1] * scaleY);
+                        ctx.stroke();
+                        drawnConnections++;
+                    }
+                });
+
+                // BLACK keypoints
+                ctx.fillStyle = '#000000';
+                keypoints.forEach((kp, idx) => {
+                    if (kp && kp[2] > 0.3) {
+                        ctx.beginPath();
+                        ctx.arc(kp[0] * scaleX, kp[1] * scaleY, 6, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                });
+
+                // Draw head circle
+                const nose = keypoints[0];
+                if (nose && nose[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.arc(nose[0] * scaleX, nose[1] * scaleY, 12, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            },
+
+            // Draw simplified stickman with spine, shoulders, hips
+            drawSimplifiedStickman(keypoints) {
+                const ctx = State.simplifiedCtx;
+                const canvas = State.simplifiedCanvas;
+                const scaleX = canvas.width / (State.poseData.metadata?.width || 848);
+                const scaleY = canvas.height / (State.poseData.metadata?.height || 1688);
+
+                // Get key body points
+                const leftShoulder = keypoints[5];
+                const rightShoulder = keypoints[6];
+                const leftHip = keypoints[11];
+                const rightHip = keypoints[12];
+                const leftElbow = keypoints[7];
+                const rightElbow = keypoints[8];
+                const leftWrist = keypoints[9];
+                const rightWrist = keypoints[10];
+                const leftKnee = keypoints[13];
+                const rightKnee = keypoints[14];
+                const leftAnkle = keypoints[15];
+                const rightAnkle = keypoints[16];
+                const nose = keypoints[0];
+
+                // Calculate center points
+                const shoulderCenterX = (leftShoulder[0] + rightShoulder[0]) / 2;
+                const shoulderCenterY = (leftShoulder[1] + rightShoulder[1]) / 2;
+                const hipCenterX = (leftHip[0] + rightHip[0]) / 2;
+                const hipCenterY = (leftHip[1] + rightHip[1]) / 2;
+
+                ctx.strokeStyle = State.simplifiedStickmanColor;
+                ctx.lineWidth = State.stickmanLineWidth;  // Use State parameter
+                ctx.lineCap = 'round';
+                ctx.fillStyle = State.simplifiedStickmanColor;
+
+                // Draw spine (hip center to shoulder center)
+                ctx.beginPath();
+                ctx.moveTo(hipCenterX * scaleX, hipCenterY * scaleY);
+                ctx.lineTo(shoulderCenterX * scaleX, shoulderCenterY * scaleY);
+                ctx.stroke();
+
+                // Draw shoulder line
+                if (leftShoulder[2] > 0.3 && rightShoulder[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(leftShoulder[0] * scaleX, leftShoulder[1] * scaleY);
+                    ctx.lineTo(rightShoulder[0] * scaleX, rightShoulder[1] * scaleY);
+                    ctx.stroke();
+                }
+
+                // Draw hip line
+                if (leftHip[2] > 0.3 && rightHip[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(leftHip[0] * scaleX, leftHip[1] * scaleY);
+                    ctx.lineTo(rightHip[0] * scaleX, rightHip[1] * scaleY);
+                    ctx.stroke();
+                }
+
+                // Draw left arm
+                if (leftShoulder[2] > 0.3 && leftElbow[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(leftShoulder[0] * scaleX, leftShoulder[1] * scaleY);
+                    ctx.lineTo(leftElbow[0] * scaleX, leftElbow[1] * scaleY);
+                    ctx.stroke();
+                }
+                if (leftElbow[2] > 0.3 && leftWrist[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(leftElbow[0] * scaleX, leftElbow[1] * scaleY);
+                    ctx.lineTo(leftWrist[0] * scaleX, leftWrist[1] * scaleY);
+                    ctx.stroke();
+                }
+
+                // Draw right arm
+                if (rightShoulder[2] > 0.3 && rightElbow[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(rightShoulder[0] * scaleX, rightShoulder[1] * scaleY);
+                    ctx.lineTo(rightElbow[0] * scaleX, rightElbow[1] * scaleY);
+                    ctx.stroke();
+                }
+                if (rightElbow[2] > 0.3 && rightWrist[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(rightElbow[0] * scaleX, rightElbow[1] * scaleY);
+                    ctx.lineTo(rightWrist[0] * scaleX, rightWrist[1] * scaleY);
+                    ctx.stroke();
+                }
+
+                // Draw left leg
+                if (leftHip[2] > 0.3 && leftKnee[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(leftHip[0] * scaleX, leftHip[1] * scaleY);
+                    ctx.lineTo(leftKnee[0] * scaleX, leftKnee[1] * scaleY);
+                    ctx.stroke();
+                }
+                if (leftKnee[2] > 0.3 && leftAnkle[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(leftKnee[0] * scaleX, leftKnee[1] * scaleY);
+                    ctx.lineTo(leftAnkle[0] * scaleX, leftAnkle[1] * scaleY);
+                    ctx.stroke();
+                }
+
+                // Draw right leg
+                if (rightHip[2] > 0.3 && rightKnee[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(rightHip[0] * scaleX, rightHip[1] * scaleY);
+                    ctx.lineTo(rightKnee[0] * scaleX, rightKnee[1] * scaleY);
+                    ctx.stroke();
+                }
+                if (rightKnee[2] > 0.3 && rightAnkle[2] > 0.3) {
+                    ctx.beginPath();
+                    ctx.moveTo(rightKnee[0] * scaleX, rightKnee[1] * scaleY);
+                    ctx.lineTo(rightAnkle[0] * scaleX, rightAnkle[1] * scaleY);
+                    ctx.stroke();
+                }
+
+                // Draw neck (shoulder center to head)
+                if (nose && nose[2] > 0.3) {
+                    let headX = nose[0];
+                    let headY = nose[1];
+                    
+                    // Apply head position correction if enabled
+                    if (State.headPositionCorrection) {
+                        // Calculate distance from nose to shoulder center
+                        const dx = headX - shoulderCenterX;
+                        const dy = headY - shoulderCenterY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // If head is too far away (horizontally), move it closer
+                        if (distance > State.headMinDistance) {
+                            // Calculate direction vector from shoulders to head
+                            const dirX = dx / distance;
+                            const dirY = dy / distance;
+                            
+                            // Place head at minimum distance
+                            headX = shoulderCenterX + dirX * State.headMinDistance;
+                            headY = shoulderCenterY + dirY * State.headMinDistance;
+                        }
+                    }
+                    
+                    // Apply head angle rotation (around shoulder center)
+                    if (State.headAngle !== 0) {
+                        const angleRad = (State.headAngle * Math.PI) / 180;
+                        const dx = headX - shoulderCenterX;
+                        const dy = headY - shoulderCenterY;
+                        
+                        // Rotate vector around shoulder center
+                        const rotatedX = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+                        const rotatedY = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+                        
+                        headX = shoulderCenterX + rotatedX;
+                        headY = shoulderCenterY + rotatedY;
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(shoulderCenterX * scaleX, shoulderCenterY * scaleY);
+                    ctx.lineTo(headX * scaleX, headY * scaleY);
+                    ctx.stroke();
+
+                    // Draw head circle
+                    ctx.beginPath();
+                    ctx.arc(headX * scaleX, headY * scaleY, State.stickmanHeadSize, 0, 2 * Math.PI);  // Use State parameter
+                    ctx.fill();
+                }
+            }
+        };
+
+        // ==========================================
+        // PIXEL GRID MODULE
+        // ==========================================
+        const PixelGridModule = {
+            // Source canvas dimensions (for sampling)
+            sourceCellWidth: 40,   // 640 / 16
+            sourceCellHeight: 20,  // 480 / 24
+            
+            // Destination canvas dimensions (for rendering)
+            containerWidth: 650,
+            containerPadding: 1,
+            containerBorder: 1,
+            blockGap: 5,
+            cellGap: 1,
+            
+            // Calculate grid dimensions dynamically from State
+            get gridCols() { return State.gridCols; },
+            get gridRows() { return State.gridRows; },
+            get blocksCount() { return State.blocksCount; },
+            get rowsPerBlock() { return State.rowsPerBlock; },
+            
+            // Recalculate source cell dimensions based on State
+            get sourceWidth() { return 640 / this.gridCols; },
+            get sourceHeight() { return 480 / this.gridRows; },
+            
+            // Calculate destination cell dimensions
+            get destCellWidth() {
+                return (this.containerWidth - 2*this.containerPadding - 2*this.containerBorder - (this.gridCols-1)*this.cellGap) / this.gridCols;
+            },
+            get destCellHeight() {
+                // 2:1 aspect ratio (width:height)
+                return this.destCellWidth / 2;
+            },
+            
+            // Calculate required canvas height based on grid dimensions
+            calculateCanvasHeight() {
+                const totalRowHeight = this.rowsPerBlock * (this.destCellHeight + this.cellGap);
+                const totalGaps = (this.blocksCount - 1) * this.blockGap;
+                return totalRowHeight * this.blocksCount + totalGaps + 2*this.containerPadding + 2*this.containerBorder + 10;
+            },
+            
+            // Update canvas size dynamically
+            updateCanvasSize() {
+                const newHeight = Math.ceil(this.calculateCanvasHeight());
+                if (State.pixelGridCanvas) {
+                    State.pixelGridCanvas.height = newHeight;
+                    Logger.log(`Pixelgrid canvas resized to 650×${newHeight}`, 'success');
+                }
+            },
+
+            // Sample simplified canvas and create pixel grid
+            generatePixelGrid() {
+                // Update canvas size based on current grid dimensions
+                this.updateCanvasSize();
+                
+                const sourceCanvas = State.simplifiedCanvas;
+                const sourceCtx = State.simplifiedCtx;
+                const destCtx = State.pixelGridCtx;
+                const destCanvas = State.pixelGridCanvas;
+
+                // Clear destination with white background
+                destCtx.fillStyle = '#ffffff';
+                destCtx.fillRect(0, 0, destCanvas.width, destCanvas.height);
+
+                // Calculate starting position (accounting for padding and border)
+                const startX = this.containerPadding + this.containerBorder;
+                const startY = this.containerPadding + this.containerBorder;
+
+                // Sample each grid cell and render with block layout
+                for (let row = 0; row < this.gridRows; row++) {
+                    for (let col = 0; col < this.gridCols; col++) {
+                        // Calculate SOURCE position (for sampling from simplified canvas)
+                        const sourceX = col * this.sourceWidth;
+                        const sourceY = row * this.sourceHeight;
+
+                        // Calculate DESTINATION position (with block gaps and cell gaps)
+                        const blockIndex = Math.floor(row / this.rowsPerBlock);
+                        const rowInBlock = row % this.rowsPerBlock;
+                        
+                        const destX = startX + col * (this.destCellWidth + this.cellGap);
+                        const destY = startY + 
+                                      blockIndex * (this.rowsPerBlock * (this.destCellHeight + this.cellGap) + this.blockGap) +
+                                      rowInBlock * (this.destCellHeight + this.cellGap);
+
+                        // Sample pixels in this cell from source canvas
+                        const imageData = sourceCtx.getImageData(sourceX, sourceY, this.sourceWidth, this.sourceHeight);
+                        const pixels = imageData.data;
+
+                        // Count black pixels (threshold for "black")
+                        let blackPixelCount = 0;
+                        const totalPixels = this.sourceWidth * this.sourceHeight;
+
+                        for (let i = 0; i < pixels.length; i += 4) {
+                            const r = pixels[i];
+                            const g = pixels[i + 1];
+                            const b = pixels[i + 2];
+                            const brightness = (r + g + b) / 3;
+
+                            // If pixel is dark (< 128), count as black
+                            if (brightness < 128) {
+                                blackPixelCount++;
+                            }
+                        }
+
+                        // Calculate percentage of black pixels
+                        const blackPercentage = blackPixelCount / totalPixels;
+
+                        // Use State threshold parameter
+                        const shouldFill = blackPercentage > State.pixelThreshold;
+                        
+                        // Apply invert if enabled
+                        const fillCell = State.invertGrid ? !shouldFill : shouldFill;
+                        
+                        if (fillCell) {
+                            destCtx.fillStyle = State.pixelGridColor;
+                            destCtx.fillRect(destX, destY, this.destCellWidth, this.destCellHeight);
+                        }
+                    }
+                }
+
+                // Draw grid lines and borders
+                this.drawGridLines();
+            },
+
+            // Draw empty grid (before any video is processed)
+            drawEmptyGrid() {
+                // Update canvas size based on current grid dimensions
+                this.updateCanvasSize();
+                
+                const ctx = State.pixelGridCtx;
+                const canvas = State.pixelGridCanvas;
+
+                // Clear canvas with white background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw only grid lines (no filled cells)
+                this.drawGridLines();
+            },
+
+            // Draw grid lines as black lines over cells
+            drawGridLines() {
+                const ctx = State.pixelGridCtx;
+                const canvas = State.pixelGridCanvas;
+
+                // Starting position
+                const startX = this.containerPadding + this.containerBorder;
+                const startY = this.containerPadding + this.containerBorder;
+
+                // Draw all grid lines in black (1px)
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+
+                // Draw grid lines for each block
+                for (let blockIndex = 0; blockIndex < this.blocksCount; blockIndex++) {
+                    const blockStartY = startY + blockIndex * (this.rowsPerBlock * (this.destCellHeight + this.cellGap) + this.blockGap);
+                    const blockEndX = startX + this.gridCols * (this.destCellWidth + this.cellGap);
+                    const blockEndY = blockStartY + this.rowsPerBlock * (this.destCellHeight + this.cellGap);
+                    
+                    // Draw all vertical lines (including outer borders)
+                    for (let col = 0; col <= this.gridCols; col++) {
+                        const x = startX + col * (this.destCellWidth + this.cellGap);
+                        ctx.beginPath();
+                        ctx.moveTo(x, blockStartY);
+                        ctx.lineTo(x, blockEndY);
+                        ctx.stroke();
+                    }
+
+                    // Draw all horizontal lines (including outer borders)
+                    for (let row = 0; row <= this.rowsPerBlock; row++) {
+                        const y = blockStartY + row * (this.destCellHeight + this.cellGap);
+                        ctx.beginPath();
+                        ctx.moveTo(startX, y);
+                        ctx.lineTo(blockEndX, y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        };
+
+        // ==========================================
+        // PLAYBACK MODULE
+        // ==========================================
+        const PlaybackModule = {
+            play() {
+                if (!State.poseData || State.isPlaying) return;
+
+                Logger.log('Starting playback');
+                State.isPlaying = true;
+                
+                const fps = State.poseData.metadata?.fps || 30;
+                
+                // Start native video playback
+                if (State.video) {
+                    State.video.loop = true;
+                    State.video.playbackRate = State.playbackSpeed;
+                    State.video.play().catch(e => {
+                        Logger.log(`Video play error: ${e.message}`, 'error');
+                    });
+                }
+
+                const renderLoop = () => {
+                    if (!State.isPlaying) return;
+                    
+                    // Get current video time and calculate frame
+                    const currentTime = State.video.currentTime;
+                    const frameIndex = Math.floor(currentTime * fps);
+                    
+                    // Make sure frame is in bounds
+                    if (frameIndex >= 0 && frameIndex < State.poseData.frames.length) {
+                        State.currentFrame = frameIndex;
+                        
+                        // Update UI
+                        document.getElementById('frameDisplay').textContent = 
+                            `${frameIndex + 1} / ${State.poseData.frames.length}`;
+                        document.getElementById('frameSlider').value = frameIndex;
+                        
+                        // Draw current frame
+                        this.drawCurrentFrame();
+                    }
+                    
+                    // Schedule next frame
+                    State.playInterval = requestAnimationFrame(renderLoop);
+                };
+                
+                renderLoop();
+            },
+            
+            drawCurrentFrame() {
+                const frameData = State.poseData.frames[State.currentFrame];
+                if (!frameData) return;
+                
+                // === VIDEO CANVAS ===
+                const vCtx = State.videoCtx;
+                const vCanvas = State.videoCanvas;
+                
+                // Clear
+                vCtx.fillStyle = '#000000';
+                vCtx.fillRect(0, 0, vCanvas.width, vCanvas.height);
+                
+                // Draw video (already playing)
+                if (State.video && State.video.readyState >= 2) {
+                    const videoAspect = State.video.videoWidth / State.video.videoHeight;
+                    const canvasAspect = vCanvas.width / vCanvas.height;
+                    
+                    let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                    
+                    if (videoAspect > canvasAspect) {
+                        drawWidth = vCanvas.width;
+                        drawHeight = vCanvas.width / videoAspect;
+                        offsetY = (vCanvas.height - drawHeight) / 2;
+                    } else {
+                        drawHeight = vCanvas.height;
+                        drawWidth = vCanvas.height * videoAspect;
+                        offsetX = (vCanvas.width - drawWidth) / 2;
+                    }
+                    
+                    try {
+                        vCtx.drawImage(State.video, 0, 0, State.video.videoWidth, State.video.videoHeight, 
+                                      offsetX, offsetY, drawWidth, drawHeight);
+                        
+                        // Draw YOLOv8 overlay
+                        const keypoints = PoseModule.extractKeypoints(frameData);
+                        if (keypoints) {
+                            PoseModule.drawYOLOv8Overlay(keypoints, offsetX, offsetY, drawWidth, drawHeight);
+                            
+                            // === STICKMAN CANVAS ===
+                            const sCtx = State.stickmanCtx;
+                            const sCanvas = State.stickmanCanvas;
+                            
+                            sCtx.fillStyle = '#ffffff';
+                            sCtx.fillRect(0, 0, sCanvas.width, sCanvas.height);
+                            
+                            PoseModule.drawStickman(keypoints);
+                            
+                            // === SIMPLIFIED CANVAS ===
+                            const simpCtx = State.simplifiedCtx;
+                            const simpCanvas = State.simplifiedCanvas;
+                            
+                            simpCtx.fillStyle = '#ffffff';
+                            simpCtx.fillRect(0, 0, simpCanvas.width, simpCanvas.height);
+                            
+                            PoseModule.drawSimplifiedStickman(keypoints);
+                            
+                            // === PIXEL GRID CANVAS ===
+                            // Generate pixel grid from simplified stickman
+                            PixelGridModule.generatePixelGrid();
+                        }
+                    } catch (e) {
+                        // Skip frame if video not ready
+                    }
+                }
+            },
+
+            stop() {
+                if (!State.isPlaying) return;
+
+                Logger.log('Stopping playback');
+                State.isPlaying = false;
+                
+                // Pause native video
+                if (State.video) {
+                    State.video.pause();
+                }
+                
+                if (State.playInterval) {
+                    cancelAnimationFrame(State.playInterval);
+                    State.playInterval = null;
+                }
+            }
+        };
+
+        // ==========================================
+        // UI MODULE
+        // ==========================================
+        const UI = {
+            initialize() {
+                // Video upload - NOW SUPPORTS MULTIPLE FILES
+                const dropArea = document.getElementById('videoDropArea');
+                const fileInput = document.getElementById('videoInput');
+
+                dropArea.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                        const files = Array.from(e.target.files);
+                        VideoModule.uploadMultipleVideos(files);
+                    }
+                });
+
+                // Drag and drop - NOW SUPPORTS MULTIPLE FILES
+                dropArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropArea.style.background = '#e0e0e0';
+                });
+
+                dropArea.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropArea.style.background = '';
+                });
+
+                dropArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropArea.style.background = '';
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        const files = Array.from(e.dataTransfer.files);
+                        VideoModule.uploadMultipleVideos(files);
+                    }
+                });
+
+                // Process button - OLD functionality for compatibility
+                document.getElementById('processBtn').addEventListener('click', () => {
+                    VideoModule.processWithServer();
+                });
+
+                // Playback controls
+                document.getElementById('playBtn').addEventListener('click', () => {
+                    PlaybackModule.play();
+                });
+
+                document.getElementById('stopBtn').addEventListener('click', () => {
+                    PlaybackModule.stop();
+                });
+
+                // Frame navigation
+                document.getElementById('prevFrameBtn').addEventListener('click', () => {
+                    FrameNavigationModule.prevFrame();
+                });
+
+                document.getElementById('nextFrameBtn').addEventListener('click', () => {
+                    FrameNavigationModule.nextFrame();
+                });
+
+                // Frame slider
+                document.getElementById('frameSlider').addEventListener('input', (e) => {
+                    // Only stop if user is manually dragging (not programmatic update)
+                    if (document.activeElement === e.target) {
+                        PlaybackModule.stop();
+                        CanvasModule.renderFrame(parseInt(e.target.value));
+                    }
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (!State.poseData) return;
+                    
+                    if (e.key === 'ArrowLeft') {
+                        FrameNavigationModule.prevFrame();
+                    } else if (e.key === 'ArrowRight') {
+                        FrameNavigationModule.nextFrame();
+                    } else if (e.key === ' ') {
+                        e.preventDefault();
+                        if (State.isPlaying) {
+                            PlaybackModule.stop();
+                        } else {
+                            PlaybackModule.play();
+                        }
+                    }
+                });
+
+                Logger.log('UI initialized', 'success');
+            }
+        };
+
+        // ==========================================
+        // EXPORT MODULE
+        // ==========================================
+        const ExportModule = {
+            // Export current frame from a canvas
+            exportFrame(canvasId, canvasName) {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) {
+                    Logger.log(`Canvas ${canvasId} not found`, 'error');
+                    return;
+                }
+
+                try {
+                    canvas.toBlob((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        const frameNum = String(State.currentFrame + 1).padStart(4, '0');
+                        link.download = `${canvasName}_frame_${frameNum}.png`;
+                        link.href = url;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        Logger.log(`Exported ${canvasName} frame ${State.currentFrame + 1}`, 'success');
+                    });
+                } catch (e) {
+                    Logger.log(`Export error: ${e.message}`, 'error');
+                }
+            },
+
+            // Export all frames as ZIP
+            async exportAllFrames(canvasId, canvasName) {
+                if (!State.poseData) {
+                    Logger.log('No pose data available', 'error');
+                    return;
+                }
+
+                Logger.log(`Exporting all ${State.poseData.frames.length} frames from ${canvasName}...`);
+                
+                const canvas = document.getElementById(canvasId);
+                const totalFrames = State.poseData.frames.length;
+                const wasPlaying = State.isPlaying;
+                
+                // Stop playback during export
+                if (wasPlaying) {
+                    PlaybackModule.stop();
+                }
+
+                // Create array to store images
+                const images = [];
+
+                // Render and capture each frame
+                for (let i = 0; i < totalFrames; i++) {
+                    // Render frame
+                    CanvasModule.renderFrame(i);
+                    
+                    // Wait for rendering (increased for video seeking and pixel grid generation)
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                    
+                    // Capture canvas
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const frameNum = String(i + 1).padStart(4, '0');
+                    images.push({
+                        name: `${canvasName}_frame_${frameNum}.png`,
+                        data: dataUrl
+                    });
+                    
+                    // Update progress
+                    if (i % 10 === 0) {
+                        Logger.log(`Progress: ${i + 1}/${totalFrames} frames`);
+                    }
+                }
+
+                Logger.log('All frames captured, creating download...', 'success');
+                
+                // For simplicity, download frames sequentially
+                // (In production, you'd use JSZip library for actual ZIP)
+                images.forEach((img, idx) => {
+                    setTimeout(() => {
+                        const link = document.createElement('a');
+                        link.download = img.name;
+                        link.href = img.data;
+                        link.click();
+                    }, idx * 100); // Stagger downloads
+                });
+
+                Logger.log(`Export complete! ${images.length} frames downloaded`, 'success');
+                
+                // Resume playback if it was playing
+                if (wasPlaying) {
+                    PlaybackModule.play();
+                }
+            },
+
+            // Detect best video format for current browser
+            getBestVideoFormat() {
+                // Try formats in order of preference
+                const formats = [
+                    { mimeType: 'video/webm;codecs=vp9', ext: 'webm', name: 'WebM (VP9)' },
+                    { mimeType: 'video/webm;codecs=vp8', ext: 'webm', name: 'WebM (VP8)' },
+                    { mimeType: 'video/webm', ext: 'webm', name: 'WebM' },
+                    { mimeType: 'video/mp4', ext: 'mp4', name: 'MP4' }
+                ];
+
+                for (const format of formats) {
+                    if (MediaRecorder.isTypeSupported(format.mimeType)) {
+                        Logger.log(`Using video format: ${format.name}`, 'info');
+                        return format;
+                    }
+                }
+
+                // Fallback
+                Logger.log('No preferred format supported, using default', 'info');
+                return { mimeType: '', ext: 'webm', name: 'Default' };
+            },
+
+            // Export canvas as video using MediaRecorder
+            async exportAsVideo(canvasId, canvasName) {
+                if (!State.poseData) {
+                    Logger.log('No pose data available', 'error');
+                    return;
+                }
+
+                Logger.log(`Exporting ${canvasName} as video...`);
+                
+                const canvas = document.getElementById(canvasId);
+                const fps = State.poseData.metadata?.fps || 30;
+                const totalFrames = State.poseData.frames.length;
+                const wasPlaying = State.isPlaying;
+                
+                // Stop playback during export
+                if (wasPlaying) {
+                    PlaybackModule.stop();
+                }
+
+                try {
+                    // Detect best format for browser
+                    const format = this.getBestVideoFormat();
+                    
+                    // Create a video stream from canvas
+                    const stream = canvas.captureStream(fps);
+                    
+                    // Create MediaRecorder with detected format
+                    const options = format.mimeType ? 
+                        { mimeType: format.mimeType, videoBitsPerSecond: 5000000 } : 
+                        { videoBitsPerSecond: 5000000 };
+                    
+                    const mediaRecorder = new MediaRecorder(stream, options);
+
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) {
+                            chunks.push(e.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.download = `${canvasName}_video.${format.ext}`;
+                        link.href = url;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        Logger.log(`✅ Video export complete: ${canvasName}_video.${format.ext}`, 'success');
+                        
+                        // Resume playback if it was playing
+                        if (wasPlaying) {
+                            PlaybackModule.play();
+                        }
+                    };
+
+                    // Start recording
+                    mediaRecorder.start();
+                    Logger.log('Recording started...');
+
+                    // Play through all frames
+                    State.currentFrame = 0;
+                    PlaybackModule.play();
+
+                    // Stop recording after video duration
+                    const duration = (totalFrames / fps) * 1000;
+                    setTimeout(() => {
+                        PlaybackModule.stop();
+                        mediaRecorder.stop();
+                        Logger.log('Recording stopped');
+                    }, duration + 500); // Add 500ms buffer
+
+                } catch (error) {
+                    Logger.log(`Video export error: ${error.message}`, 'error');
+                    if (wasPlaying) {
+                        PlaybackModule.play();
+                    }
+                }
+            },
+
+            // Create export buttons for all canvases
+            createExportButtons() {
+                const container = document.getElementById('canvasExportButtons');
+                container.innerHTML = '';
+
+                CanvasConfig.forEach(config => {
+                    // Create collapsible section
+                    const section = document.createElement('div');
+                    section.className = 'canvas-section';
+
+                    // Create header (clickable)
+                    const header = document.createElement('div');
+                    header.className = 'canvas-section-header';
+                    header.innerHTML = `
+                        <span>${config.name} Options</span>
+                        <span class="canvas-section-arrow">▶</span>
+                    `;
+
+                    // Create content (initially hidden)
+                    const content = document.createElement('div');
+                    content.className = 'canvas-section-content';
+
+                    // Toggle on click
+                    header.onclick = () => {
+                        content.classList.toggle('active');
+                        header.querySelector('.canvas-section-arrow').classList.toggle('open');
+                    };
+
+                    // Save Frame button
+                    const btnFrame = document.createElement('button');
+                    btnFrame.textContent = 'Save Frame';
+                    btnFrame.style.width = '100%';
+                    btnFrame.style.marginBottom = '5px';
+                    btnFrame.onclick = () => this.exportFrame(config.id, config.name);
+                    content.appendChild(btnFrame);
+
+                    // Save All Frames button
+                    const btnAll = document.createElement('button');
+                    btnAll.textContent = 'Save All Frames';
+                    btnAll.style.width = '100%';
+                    btnAll.style.marginBottom = '5px';
+                    btnAll.onclick = () => this.exportAllFrames(config.id, config.name);
+                    content.appendChild(btnAll);
+
+                    // Export as Video button
+                    const btnVideo = document.createElement('button');
+                    btnVideo.textContent = 'Export as Video';
+                    btnVideo.style.width = '100%';
+                    btnVideo.onclick = () => this.exportAsVideo(config.id, config.name);
+                    content.appendChild(btnVideo);
+
+                    section.appendChild(header);
+                    section.appendChild(content);
+                    container.appendChild(section);
+                });
+
+                Logger.log('Export buttons created', 'success');
+            }
+        };
+
+        // ==========================================
+        // FRAME NAVIGATION MODULE
+        // ==========================================
+        const FrameNavigationModule = {
+            nextFrame() {
+                if (!State.poseData) return;
+                
+                PlaybackModule.stop();
+                State.currentFrame++;
+                if (State.currentFrame >= State.poseData.frames.length) {
+                    State.currentFrame = State.poseData.frames.length - 1;
+                }
+                CanvasModule.renderFrame(State.currentFrame);
+            },
+
+            prevFrame() {
+                if (!State.poseData) return;
+                
+                PlaybackModule.stop();
+                State.currentFrame--;
+                if (State.currentFrame < 0) {
+                    State.currentFrame = 0;
+                }
+                CanvasModule.renderFrame(State.currentFrame);
+            }
+        };
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Intro Modal Handler
+            const introModal = document.getElementById('introModal');
+            const introModalClose = document.getElementById('introModalClose');
+            
+            if (introModal && introModalClose) {
+                introModalClose.addEventListener('click', () => {
+                    introModal.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        introModal.style.display = 'none';
+                    }, 300);
+                });
+                
+                // Also close on Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && introModal.style.display !== 'none') {
+                        introModalClose.click();
+                    }
+                });
+            }
+
+            // Extended Info Modal Handler
+            const infoButton = document.getElementById('infoButton');
+            const infoModalExtended = document.getElementById('infoModalExtended');
+            const infoModalExtendedClose = document.getElementById('infoModalExtendedClose');
+            
+            if (infoButton && infoModalExtended && infoModalExtendedClose) {
+                infoButton.addEventListener('click', () => {
+                    infoModalExtended.style.display = 'flex';
+                    infoModalExtended.style.animation = 'fadeIn 0.3s ease';
+                });
+                
+                infoModalExtendedClose.addEventListener('click', () => {
+                    infoModalExtended.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        infoModalExtended.style.display = 'none';
+                    }, 300);
+                });
+                
+                // Also close extended modal on Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && infoModalExtended.style.display === 'flex') {
+                        infoModalExtendedClose.click();
+                    }
+                });
+            }
+            
+            Logger.log('=== DancePixel Debug Starting ===');
+            
+            CanvasModule.initialize();
+            ServerModule.connect();
+            UI.initialize();
+            
+            // Draw empty pixel grid on startup
+            PixelGridModule.drawEmptyGrid();
+            Logger.log('Empty pixel grid drawn', 'success');
+            
+            // Parameter controls - toggle
+            const paramHeader = document.getElementById('parameterSectionHeader');
+            const paramContent = document.getElementById('parameterSectionContent');
+            if (paramHeader && paramContent) {
+                paramHeader.onclick = () => {
+                    paramContent.classList.toggle('active');
+                    paramHeader.querySelector('.canvas-section-arrow').classList.toggle('open');
+                };
+            }
+
+            // Line Width slider - WITH LIVE UPDATE
+            const lineWidthSlider = document.getElementById('lineWidthSlider');
+            const lineWidthValue = document.getElementById('lineWidthValue');
+            if (lineWidthSlider && lineWidthValue) {
+                lineWidthSlider.addEventListener('input', (e) => {
+                    State.stickmanLineWidth = parseFloat(e.target.value);
+                    lineWidthValue.textContent = e.target.value;
+                    // Re-render immediately for live preview
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Head Size slider - WITH LIVE UPDATE
+            const headSizeSlider = document.getElementById('headSizeSlider');
+            const headSizeValue = document.getElementById('headSizeValue');
+            if (headSizeSlider && headSizeValue) {
+                headSizeSlider.addEventListener('input', (e) => {
+                    State.stickmanHeadSize = parseFloat(e.target.value);
+                    headSizeValue.textContent = e.target.value;
+                    // Re-render immediately for live preview
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Threshold slider - WITH LIVE UPDATE
+            const thresholdSlider = document.getElementById('thresholdSlider');
+            const thresholdValue = document.getElementById('thresholdValue');
+            if (thresholdSlider && thresholdValue) {
+                thresholdSlider.addEventListener('input', (e) => {
+                    State.pixelThreshold = parseFloat(e.target.value) / 100;
+                    thresholdValue.textContent = e.target.value;
+                    // Re-render immediately for live preview
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Head Position Correction toggle
+            const headCorrectionToggle = document.getElementById('headCorrectionToggle');
+            const headDistanceGroup = document.getElementById('headDistanceGroup');
+            if (headCorrectionToggle && headDistanceGroup) {
+                headCorrectionToggle.addEventListener('change', (e) => {
+                    State.headPositionCorrection = e.target.checked;
+                    // Show/hide distance slider
+                    headDistanceGroup.style.display = e.target.checked ? 'flex' : 'none';
+                    // Re-render immediately for live preview
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Head Distance slider - WITH LIVE UPDATE
+            const headDistanceSlider = document.getElementById('headDistanceSlider');
+            const headDistanceValue = document.getElementById('headDistanceValue');
+            if (headDistanceSlider && headDistanceValue) {
+                headDistanceSlider.addEventListener('input', (e) => {
+                    State.headMinDistance = parseFloat(e.target.value);
+                    headDistanceValue.textContent = e.target.value;
+                    // Re-render immediately for live preview
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Head Angle slider - WITH LIVE UPDATE
+            const headAngleSlider = document.getElementById('headAngleSlider');
+            const headAngleValue = document.getElementById('headAngleValue');
+            if (headAngleSlider && headAngleValue) {
+                headAngleSlider.addEventListener('input', (e) => {
+                    State.headAngle = parseFloat(e.target.value);
+                    headAngleValue.textContent = e.target.value;
+                    // Re-render immediately for live preview
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Grid Options - toggle
+            const gridOptionsHeader = document.getElementById('gridOptionsSectionHeader');
+            const gridOptionsContent = document.getElementById('gridOptionsSectionContent');
+            if (gridOptionsHeader && gridOptionsContent) {
+                gridOptionsHeader.onclick = () => {
+                    gridOptionsContent.classList.toggle('active');
+                    gridOptionsHeader.querySelector('.canvas-section-arrow').classList.toggle('open');
+                };
+            }
+
+            // Helper function to update total displays
+            const updateGridTotals = () => {
+                const totalRows = State.rowsPerBlock * State.blocksCount;
+                State.gridRows = totalRows;
+                document.getElementById('totalRowsDisplay').textContent = totalRows;
+                document.getElementById('totalCellsDisplay').textContent = State.gridCols * totalRows;
+            };
+
+            // Grid Columns slider
+            const gridColsSlider = document.getElementById('gridColsSlider');
+            const gridColsValue = document.getElementById('gridColsValue');
+            if (gridColsSlider && gridColsValue) {
+                gridColsSlider.addEventListener('input', (e) => {
+                    State.gridCols = parseInt(e.target.value);
+                    gridColsValue.textContent = e.target.value;
+                    updateGridTotals();
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Rows per Block slider
+            const rowsPerBlockSlider = document.getElementById('rowsPerBlockSlider');
+            const rowsPerBlockValue = document.getElementById('rowsPerBlockValue');
+            if (rowsPerBlockSlider && rowsPerBlockValue) {
+                rowsPerBlockSlider.addEventListener('input', (e) => {
+                    State.rowsPerBlock = parseInt(e.target.value);
+                    rowsPerBlockValue.textContent = e.target.value;
+                    updateGridTotals();
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Blocks Count slider
+            const blocksCountSlider = document.getElementById('blocksCountSlider');
+            const blocksCountValue = document.getElementById('blocksCountValue');
+            if (blocksCountSlider && blocksCountValue) {
+                blocksCountSlider.addEventListener('input', (e) => {
+                    State.blocksCount = parseInt(e.target.value);
+                    blocksCountValue.textContent = e.target.value;
+                    updateGridTotals();
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Pixel Grid Color Select
+            const pixelGridColorSelect = document.getElementById('pixelGridColorSelect');
+            if (pixelGridColorSelect) {
+                pixelGridColorSelect.addEventListener('change', (e) => {
+                    State.pixelGridColor = e.target.value;
+                    Logger.log(`Pixel Grid Color changed to ${e.target.value}`);
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Invert Grid Toggle
+            const invertGridToggle = document.getElementById('invertGridToggle');
+            if (invertGridToggle) {
+                invertGridToggle.addEventListener('change', (e) => {
+                    State.invertGrid = e.target.checked;
+                    Logger.log(`Grid Invert: ${State.invertGrid}`);
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Stickman Color Select
+            const stickmanColorSelect = document.getElementById('stickmanColorSelect');
+            if (stickmanColorSelect) {
+                stickmanColorSelect.addEventListener('change', (e) => {
+                    State.stickmanColor = e.target.value;
+                    State.simplifiedStickmanColor = e.target.value;
+                    Logger.log(`Stickman Color changed to ${e.target.value}`);
+                    if (State.poseData) {
+                        CanvasModule.renderFrame(State.currentFrame);
+                    }
+                });
+            }
+
+            // Playback Speed slider
+            const playbackSpeedSlider = document.getElementById('playbackSpeedSlider');
+            const playbackSpeedValue = document.getElementById('playbackSpeedValue');
+            if (playbackSpeedSlider && playbackSpeedValue) {
+                playbackSpeedSlider.addEventListener('input', (e) => {
+                    State.playbackSpeed = parseFloat(e.target.value);
+                    playbackSpeedValue.textContent = State.playbackSpeed.toFixed(2) + 'x';
+                    if (State.video) {
+                        State.video.playbackRate = State.playbackSpeed;
+                    }
+                });
+            }
+
+            // Layout Mode selector
+            const layoutModeSelect = document.getElementById('layoutModeSelect');
+            const topbarToggleGroup = document.getElementById('topbarToggleGroup');
+            if (layoutModeSelect && topbarToggleGroup) {
+                layoutModeSelect.addEventListener('change', (e) => {
+                    State.currentLayout = e.target.value;
+                    
+                    const videoDisplay = document.querySelector('.video-display');
+                    const sidebarRight = document.querySelector('.canvas-sidebar-right');
+                    const pixelgridMain = document.querySelector('.pixelgrid-main');
+                    
+                    if (State.currentLayout === 'topbar') {
+                        // Show topbar toggle
+                        topbarToggleGroup.style.display = 'block';
+                        
+                        // Create or get topbar
+                        let topbar = document.getElementById('dynamicTopbar');
+                        if (!topbar) {
+                            topbar = document.createElement('div');
+                            topbar.id = 'dynamicTopbar';
+                            topbar.style.width = '100%';
+                            topbar.style.display = 'flex';
+                            topbar.style.flexDirection = 'column';
+                            topbar.style.backgroundColor = '#f0f0f0';
+                            topbar.style.borderBottom = '2px solid #000';
+                            topbar.style.transition = 'opacity 0.3s ease';
+                            topbar.style.overflow = 'hidden';
+                            topbar.style.maxHeight = '600px';
+                            topbar.style.minHeight = '100px';
+                            
+                            // Canvas container
+                            const canvasContainer = document.createElement('div');
+                            canvasContainer.id = 'topbarCanvasContainer';
+                            canvasContainer.style.display = 'flex';
+                            canvasContainer.style.gap = '10px';
+                            canvasContainer.style.padding = '10px';
+                            canvasContainer.style.overflow = 'auto';
+                            canvasContainer.style.flex = '1';
+                            
+                            // Move canvas from sidebar-right to container
+                            const canvasWrappers = sidebarRight.querySelectorAll('.canvas-wrapper');
+                            canvasWrappers.forEach(wrapper => {
+                                wrapper.style.flex = '1';
+                                canvasContainer.appendChild(wrapper);
+                            });
+                            
+                            topbar.appendChild(canvasContainer);
+                            
+                            // Add resize handle
+                            const resizeHandle = document.createElement('div');
+                            resizeHandle.className = 'topbar-resize-handle';
+                            resizeHandle.id = 'topbarResizeHandle';
+                            topbar.appendChild(resizeHandle);
+                            
+                            // Resize functionality
+                            let isResizing = false;
+                            let startY = 0;
+                            let startHeight = 0;
+                            
+                            resizeHandle.addEventListener('mousedown', (e) => {
+                                isResizing = true;
+                                startY = e.clientY;
+                                startHeight = topbar.offsetHeight;
+                                document.body.style.cursor = 'ns-resize';
+                                e.preventDefault();
+                            });
+                            
+                            document.addEventListener('mousemove', (e) => {
+                                if (!isResizing) return;
+                                const deltaY = e.clientY - startY;
+                                const newHeight = Math.max(100, Math.min(800, startHeight + deltaY));
+                                topbar.style.maxHeight = newHeight + 'px';
+                                topbar.style.height = newHeight + 'px';
+                            });
+                            
+                            document.addEventListener('mouseup', () => {
+                                if (isResizing) {
+                                    isResizing = false;
+                                    document.body.style.cursor = 'default';
+                                }
+                            });
+                        }
+                        
+                        // Change video-display to column layout
+                        videoDisplay.style.flexDirection = 'column';
+                        videoDisplay.style.alignItems = 'stretch';
+                        
+                        // Hide sidebar-right
+                        sidebarRight.style.display = 'none';
+                        
+                        // Insert topbar at the beginning of video-display
+                        videoDisplay.insertBefore(topbar, videoDisplay.firstChild);
+                        
+                        // Make pixelgrid take remaining space
+                        pixelgridMain.style.flex = '1';
+                        
+                    } else {
+                        // Hide topbar toggle
+                        topbarToggleGroup.style.display = 'none';
+                        
+                        // Restore row layout
+                        videoDisplay.style.flexDirection = 'row';
+                        videoDisplay.style.alignItems = 'flex-start';
+                        
+                        // Move canvas back to sidebar-right
+                        const topbar = document.getElementById('dynamicTopbar');
+                        if (topbar) {
+                            const canvasContainer = document.getElementById('topbarCanvasContainer');
+                            if (canvasContainer) {
+                                const canvasWrappers = canvasContainer.querySelectorAll('.canvas-wrapper');
+                                canvasWrappers.forEach(wrapper => {
+                                    wrapper.style.flex = '0 0 auto';
+                                    sidebarRight.appendChild(wrapper);
+                                });
+                            }
+                            topbar.remove();
+                        }
+                        
+                        // Show sidebar-right
+                        sidebarRight.style.display = 'flex';
+                        
+                        // Reset pixelgrid flex
+                        pixelgridMain.style.flex = '1';
+                    }
+                });
+            }
+
+            // Topbar Visibility toggle
+            const topbarVisibleToggle = document.getElementById('topbarVisibleToggle');
+            if (topbarVisibleToggle) {
+                topbarVisibleToggle.addEventListener('change', (e) => {
+                    State.topbarVisible = e.target.checked;
+                    const topbar = document.getElementById('dynamicTopbar');
+                    if (topbar) {
+                        if (State.topbarVisible) {
+                            topbar.style.maxHeight = '600px';
+                            topbar.style.opacity = '1';
+                        } else {
+                            topbar.style.maxHeight = '0';
+                            topbar.style.opacity = '0';
+                            topbar.style.padding = '0';
+                        }
+                    }
+                });
+            }
+            
+            // ngrok Section Toggle
+            const ngrokSectionHeader = document.getElementById('ngrokSectionHeader');
+            const ngrokSectionContent = document.getElementById('ngrokSectionContent');
+            if (ngrokSectionHeader && ngrokSectionContent) {
+                ngrokSectionHeader.onclick = () => {
+                    ngrokSectionContent.classList.toggle('active');
+                    ngrokSectionHeader.querySelector('.canvas-section-arrow').classList.toggle('open');
+                };
+            }
+            
+            // ngrok Auth Token Update
+            const ngrokAuthToken = document.getElementById('ngrokAuthToken');
+            const ngrokAuthCmd = document.getElementById('ngrokAuthCmd');
+            if (ngrokAuthToken && ngrokAuthCmd) {
+                ngrokAuthToken.addEventListener('input', (e) => {
+                    State.ngrokAuthToken = e.target.value;
+                    ngrokAuthCmd.textContent = `ngrok config add-authtoken ${e.target.value}`;
+                });
+            }
+            
+            // Copy Install Command
+            const copyInstallCmd = document.getElementById('copyInstallCmd');
+            if (copyInstallCmd) {
+                copyInstallCmd.addEventListener('click', () => {
+                    const cmd = document.getElementById('ngrokInstallCmd').textContent;
+                    navigator.clipboard.writeText(cmd).then(() => {
+                        copyInstallCmd.textContent = 'Copied! Danach PowerShell NEU öffnen!';
+                        setTimeout(() => { copyInstallCmd.textContent = 'Copy Install Command'; }, 3000);
+                    });
+                });
+            }
+            
+            // Copy Update Command
+            const copyUpdateCmd = document.getElementById('copyUpdateCmd');
+            if (copyUpdateCmd) {
+                copyUpdateCmd.addEventListener('click', () => {
+                    const cmd = document.getElementById('ngrokUpdateCmd').textContent;
+                    navigator.clipboard.writeText(cmd).then(() => {
+                        copyUpdateCmd.textContent = 'Copied! Danach PowerShell NEU öffnen!';
+                        setTimeout(() => { copyUpdateCmd.textContent = 'Copy Update Command'; }, 3000);
+                    });
+                });
+            }
+            
+            // Copy Auth Command
+            const copyAuthCmd = document.getElementById('copyAuthCmd');
+            if (copyAuthCmd) {
+                copyAuthCmd.addEventListener('click', () => {
+                    const cmd = document.getElementById('ngrokAuthCmd').textContent;
+                    navigator.clipboard.writeText(cmd).then(() => {
+                        copyAuthCmd.textContent = 'Copied!';
+                        setTimeout(() => { copyAuthCmd.textContent = 'Copy Command'; }, 2000);
+                    });
+                });
+            }
+            
+            // Copy HTTP Command
+            const copyHttpCmd = document.getElementById('copyHttpCmd');
+            if (copyHttpCmd) {
+                copyHttpCmd.addEventListener('click', () => {
+                    const cmd = document.getElementById('ngrokHttpCmd').textContent;
+                    navigator.clipboard.writeText(cmd).then(() => {
+                        copyHttpCmd.textContent = 'Copied!';
+                        setTimeout(() => { copyHttpCmd.textContent = 'Copy Tunnel Command'; }, 2000);
+                    });
+                });
+            }
+            
+            // Copy Python Server Command
+            const copyPythonServerCmd = document.getElementById('copyPythonServerCmd');
+            if (copyPythonServerCmd) {
+                copyPythonServerCmd.addEventListener('click', () => {
+                    const cmd = document.getElementById('pythonServerCmd').textContent;
+                    navigator.clipboard.writeText(cmd).then(() => {
+                        copyPythonServerCmd.textContent = 'Copied!';
+                        setTimeout(() => { copyPythonServerCmd.textContent = 'Copy Server Command'; }, 2000);
+                    });
+                });
+            }
+            
+            // ngrok URL Input
+            const ngrokUrlInput = document.getElementById('ngrokUrl');
+            const openNgrokUrl = document.getElementById('openNgrokUrl');
+            const ngrokStatus = document.getElementById('ngrokStatus');
+            const ngrokStatusText = document.getElementById('ngrokStatusText');
+            const ngrokStatusLink = document.getElementById('ngrokStatusLink');
+            
+            if (ngrokUrlInput && openNgrokUrl) {
+                ngrokUrlInput.addEventListener('input', (e) => {
+                    State.ngrokUrl = e.target.value.trim();
+                    openNgrokUrl.disabled = !State.ngrokUrl;
+                    
+                    if (State.ngrokUrl) {
+                        ngrokStatus.style.display = 'block';
+                        ngrokStatusText.textContent = 'Tunnel Active';
+                        ngrokStatusLink.href = State.ngrokUrl;
+                        ngrokStatusLink.textContent = State.ngrokUrl;
+                    } else {
+                        ngrokStatus.style.display = 'none';
+                    }
+                });
+                
+                openNgrokUrl.addEventListener('click', () => {
+                    if (State.ngrokUrl) {
+                        window.open(State.ngrokUrl, '_blank');
+                    }
+                });
+            }
+
+            // Support Modal Handler
+            const supportButton = document.getElementById('supportButton');
+            const supportModal = document.getElementById('supportModal');
+            const supportModalClose = document.getElementById('supportModalClose');
+            
+            if (supportButton && supportModal && supportModalClose) {
+                supportButton.addEventListener('click', () => {
+                    supportModal.style.display = 'flex';
+                    supportModal.style.animation = 'fadeIn 0.3s ease';
+                });
+                
+                supportModalClose.addEventListener('click', () => {
+                    supportModal.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        supportModal.style.display = 'none';
+                    }, 300);
+                });
+                
+                // Also close support modal on Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && supportModal.style.display === 'flex') {
+                        supportModalClose.click();
+                    }
+                });
+            }
+
+            // Converter Section Toggle
+            const converterHeader = document.getElementById('converterSectionHeader');
+            const converterContent = document.getElementById('converterSectionContent');
+            if (converterHeader && converterContent) {
+                converterHeader.onclick = () => {
+                    converterContent.classList.toggle('active');
+                    converterHeader.querySelector('.canvas-section-arrow').classList.toggle('open');
+                };
+            }
+
+            // WebM to MOV Converter
+            const converterInputWebM = document.getElementById('converterInputWebM');
+            const converterSelectBtnWebM = document.getElementById('converterSelectBtnWebM');
+            const converterConvertBtnWebM = document.getElementById('converterConvertBtnWebM');
+            const converterStatusWebM = document.getElementById('converterStatusWebM');
+            let converterFileWebM = null;
+
+            if (converterSelectBtnWebM && converterInputWebM) {
+                converterSelectBtnWebM.addEventListener('click', () => {
+                    converterInputWebM.click();
+                });
+
+                converterInputWebM.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        converterFileWebM = file;
+                        converterStatusWebM.textContent = `✓ Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                        converterStatusWebM.style.color = '#000';
+                        converterConvertBtnWebM.disabled = false;
+                        converterConvertBtnWebM.style.background = '#000';
+                        converterConvertBtnWebM.style.cursor = 'pointer';
+                    }
+                });
+
+                converterConvertBtnWebM.addEventListener('click', async () => {
+                    if (!converterFileWebM) return;
+
+                    converterConvertBtnWebM.disabled = true;
+                    converterConvertBtnWebM.style.background = '#666';
+                    converterConvertBtnWebM.style.cursor = 'not-allowed';
+                    converterStatusWebM.textContent = 'Converting... This may take a while.';
+                    converterStatusWebM.style.color = '#ff6600';
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', converterFileWebM);
+
+                        const response = await fetch(Config.server.url + '/convert-to-mov', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Server error: ${response.status}`);
+                        }
+
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        const fileName = converterFileWebM.name.replace(/\.webm$/i, '.mov');
+                        link.download = fileName;
+                        link.href = url;
+                        link.click();
+                        URL.revokeObjectURL(url);
+
+                        converterStatusWebM.textContent = `✓ Conversion complete! Downloaded: ${fileName}`;
+                        converterStatusWebM.style.color = '#00aa00';
+                        Logger.log(`Video converted: ${fileName}`, 'success');
+
+                    } catch (error) {
+                        converterStatusWebM.textContent = `✗ Conversion failed: ${error.message}`;
+                        converterStatusWebM.style.color = '#ff0000';
+                        Logger.log(`Conversion error: ${error.message}`, 'error');
+                    } finally {
+                        converterConvertBtnWebM.disabled = false;
+                        converterConvertBtnWebM.style.background = '#000';
+                        converterConvertBtnWebM.style.cursor = 'pointer';
+                    }
+                });
+            }
+
+            // MP4 to MOV Converter
+            const converterInputMP4 = document.getElementById('converterInputMP4');
+            const converterSelectBtnMP4 = document.getElementById('converterSelectBtnMP4');
+            const converterConvertBtnMP4 = document.getElementById('converterConvertBtnMP4');
+            const converterStatusMP4 = document.getElementById('converterStatusMP4');
+            let converterFileMP4 = null;
+
+            if (converterSelectBtnMP4 && converterInputMP4) {
+                converterSelectBtnMP4.addEventListener('click', () => {
+                    converterInputMP4.click();
+                });
+
+                converterInputMP4.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        converterFileMP4 = file;
+                        converterStatusMP4.textContent = `✓ Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                        converterStatusMP4.style.color = '#000';
+                        converterConvertBtnMP4.disabled = false;
+                        converterConvertBtnMP4.style.background = '#000';
+                        converterConvertBtnMP4.style.cursor = 'pointer';
+                    }
+                });
+
+                converterConvertBtnMP4.addEventListener('click', async () => {
+                    if (!converterFileMP4) return;
+
+                    converterConvertBtnMP4.disabled = true;
+                    converterConvertBtnMP4.style.background = '#666';
+                    converterConvertBtnMP4.style.cursor = 'not-allowed';
+                    converterStatusMP4.textContent = 'Converting... This may take a while.';
+                    converterStatusMP4.style.color = '#ff6600';
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', converterFileMP4);
+
+                        const response = await fetch(Config.server.url + '/convert-to-mov', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Server error: ${response.status}`);
+                        }
+
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        const fileName = converterFileMP4.name.replace(/\.mp4$/i, '.mov');
+                        link.download = fileName;
+                        link.href = url;
+                        link.click();
+                        URL.revokeObjectURL(url);
+
+                        converterStatusMP4.textContent = `✓ Conversion complete! Downloaded: ${fileName}`;
+                        converterStatusMP4.style.color = '#00aa00';
+                        Logger.log(`Video converted: ${fileName}`, 'success');
+
+                    } catch (error) {
+                        converterStatusMP4.textContent = `✗ Conversion failed: ${error.message}`;
+                        converterStatusMP4.style.color = '#ff0000';
+                        Logger.log(`Conversion error: ${error.message}`, 'error');
+                    } finally {
+                        converterConvertBtnMP4.disabled = false;
+                        converterConvertBtnMP4.style.background = '#000';
+                        converterConvertBtnMP4.style.cursor = 'pointer';
+                    }
+                });
+            }
+            
+            Logger.log('=== Ready for input ===', 'success');
+        });
+    </script>
+</body>
+</html>

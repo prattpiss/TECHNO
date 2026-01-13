@@ -1,0 +1,2375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Text Pattern</title>
+    <!-- Adobe Fonts (Typekit) Embed Code - BITTE ERSETZEN mit Ihrem eigenen Typekit-Projekt-Code -->
+    <!-- Beispiel: <link rel="stylesheet" href="https://use.typekit.net/xxxxxx.css"> -->
+    <!-- Der korrekte Code findet sich in Ihrem Adobe Fonts-Projekt unter "Web-Projekte" > "Einbinden" -->
+    <link rel="stylesheet" href="https://use.typekit.net/xxxxxx.css">
+    <!-- jsPDF and html2canvas for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+        @font-face {
+            font-family: 'ABC Arizona Flare';
+            src: url('ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-Regular-Trial.woff2') format('woff2'),
+                 url('ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-Regular-Trial.woff') format('woff'),
+                 url('ABC Arizona/ABC Arizona Flare/ABCArizonaFlare-Regular-Trial.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'ABC Gravity Expanded';
+            src: url('ABCGravity-Expanded-Trial.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Conduit';
+            src: url('conduit/conduit.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Pixform';
+            src: url('pixform/Pixform.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'DEM-MO typeface';
+            src: url('DEM-MO typeface/Proportional/DEM-MO-400.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'DEM-MO typeface';
+            src: url('DEM-MO typeface/Proportional/DEM-MO-700.otf') format('opentype');
+            font-weight: bold;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'DEM-MOMono-300';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-300.otf') format('opentype');
+            font-weight: 300;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'DEM-MOMono-400';
+            src: url('DEM-MO typeface/Mono/DEM-MOMono-400.otf') format('opentype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'dot_matrix-expanded bold';
+            src: url('dot_matrix/fonts/ttf/DotMatrix-ExpandedBold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Info Button */
+        .info-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 0;
+            font-family: 'DEM-MO typeface', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .info-button:hover {
+            background-color: #333333;
+        }
+
+        /* Home Button */
+        .home-button {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 0;
+            font-family: 'DEM-MO typeface', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .home-button:hover {
+            background-color: #333333;
+        }
+
+        /* Floating Info Window */
+        .info-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .info-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .info-window {
+            background-color: #ffffff;
+            width: 80%;
+            max-width: 780px;
+            max-height: 90vh;
+            position: relative;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            font-family: 'DEM-MOMono-400', monospace;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .info-window p {
+            font-family: 'DEM-MOMono-400', monospace;
+            line-height: 1.6;
+            color: #000000;
+        }
+
+        .info-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background-color: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .info-close:hover {
+            color: #666666;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(16, 48px);
+            grid-template-rows: repeat(5, 48px);
+            gap: 6px;
+            margin: 20px auto 18px auto;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: fit-content;
+        }
+
+        .grid-scan-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            background-color: transparent;
+            pointer-events: none;
+            transition: transform 0.1s linear;
+            z-index: 10;
+        }
+
+        .cell {
+            width: 48px;
+            height: 48px;
+            background-color: #fff;
+            border: 1px solid #000;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.12s, transform 0.10s;
+        }
+
+        .cell.active {
+            background-color: #000; /* black instead of purple */
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .cell.playing {
+            outline: 3px solid rgba(147,112,219,0.45);
+        }
+
+        .cell.scan-active {
+            background-color: #d0d0d0 !important;
+            transition: background-color 0.1s;
+        }
+
+        .textarea-container {
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: center;
+        }
+
+        textarea {
+            width: 100%;
+            max-width: 1000px;
+            min-height: 50px;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid black;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .text-output {
+            position: relative;
+            width: fit-content;
+            max-width: calc(100% - 40px);
+            min-height: 200px;
+            padding: 60px 40px;
+            background-color: #fff;
+            margin: 20px auto 30px auto;
+            line-height: 0.9;
+            text-align: left;
+            font-family: 'DEM-MO typeface', sans-serif;
+            border: none;
+            overflow: visible;
+            box-sizing: border-box;
+        }
+        
+        .text-output .char-span {
+            display: inline;
+            background-color: transparent;
+            color: #000;
+            font-family: 'DEM-MO typeface', sans-serif;
+            font-size: 96px;
+            font-weight: 400;
+        }
+        
+        .text-output .line-wrapper {
+            display: block;
+            width: 100%;
+            text-align: left;
+            word-spacing: 0.5em;
+            letter-spacing: 0;
+            margin-bottom: 0;
+            line-height: 0.9;
+            padding-left: 0;
+            margin-left: 0;
+        }
+
+
+        .text-output .char-span.active-char {
+            color: transparent;
+            -webkit-text-stroke: 1px #000;
+            font-weight: normal;
+        }
+
+        /* Effekt 2: Ausgewählte Buchstaben haben zufällige Schriftarten */
+        .text-output.effect-2 .char-span.active-char {
+            color: #000000;
+            font-weight: normal;
+        }
+
+        /* Effekt 3: Ausgewählte Buchstaben werden kursiv geschrieben */
+        .text-output.effect-3 .char-span.active-char {
+            color: #000000;
+            font-weight: normal;
+        }
+        
+        /* Manuelle Kursiv-Verzerrung für Schriftarten ohne Italic-Variante */
+        .text-output.effect-3 .char-span.active-char.no-italic {
+            transform: skew(-15deg);
+            display: inline-block;
+        }
+
+        /* Effekt 4: Ausgewählte Buchstaben werden verzerrt (mal in die Breite, mal in die Höhe) */
+        .text-output.effect-4 .char-span.active-char {
+            color: #000000;
+            font-weight: normal;
+            display: inline-block;
+        }
+
+        /* Effekt 5: Ausgewählte Buchstaben werden gespiegelt */
+        .text-output.effect-5 .char-span.active-char {
+            color: #000000;
+            font-weight: normal;
+            display: inline-block;
+            transform: scaleX(-1);
+        }
+
+        /* Effekt 6: Alle Buchstaben bleiben schwarz, nur die nicht-ausgewählten werden geblurt */
+        .text-output.effect-6 .char-span:not(.active-char) {
+            color: #808080;
+            -webkit-text-stroke: 0.5px #808080;
+            filter: blur(2px);
+        }
+
+        .text-output.effect-6 .char-span.active-char {
+            color: #000000;
+            font-weight: normal;
+            filter: none;
+        }
+
+        .text-output .char-span.col-active {
+            background-color: rgba(147,112,219,0.15);
+        }
+
+        .text-output .char-span.circle {
+            display: inline;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #ffffff;
+            display: flex;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            min-width: 220px;
+            height: 100vh;
+            background-color: #ffffff;
+            color: #000;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 100;
+            border-right: 2px solid #000000;
+            flex-shrink: 0;
+        }
+
+        .sidebar h3 {
+            color: #000;
+            font-family: 'DEM-MOMono-300', monospace;
+            font-size: 12px;
+            font-weight: 300;
+            margin-bottom: 10px;
+            text-transform: none;
+            letter-spacing: 0;
+            border-bottom: none;
+            padding-bottom: 5px;
+            text-align: center;
+        }
+
+        .font-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .font-option {
+            padding: 8px 10px;
+            background-color: #ffffff;
+            border: 1px solid #000000;
+            color: #000;
+            cursor: pointer;
+            font-family: 'DEM-MOMono-300', monospace;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
+        }
+
+        .font-option:hover {
+            background-color: #f0f0f0;
+            border-color: #000;
+        }
+
+        .font-option.active {
+            background-color: #000000;
+            color: #ffffff;
+            border-color: #000000;
+            font-weight: 300;
+        }
+
+        .effect-btn.active {
+            background-color: #000000;
+            color: #ffffff;
+            border-color: #000000;
+            font-weight: 300;
+        }
+
+        .effect-btn:not(.active) {
+            background-color: #ffffff;
+            color: #000000;
+            border-color: #000000;
+        }
+
+        .main-container {
+            width: calc(100% - 220px);
+            margin-left: 220px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 900px;
+            text-align: center; /* Zentriert den Inhalt innerhalb des Containers (H1, P, Info-Box) */
+        }
+
+        h1 {
+            color: #9370db; /* Accent purple for headings */
+        }
+
+        /* Definition des quadratischen Textfelds */
+        .info-box {
+            background-color: #ffffff;
+            /* Rahmen: schwarz und sehr dünn (1px) */
+            border: 1px solid #333; 
+            padding: 20px;
+            margin: 30px auto;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            
+            /* Maße bleiben quadratisch */
+            width: 500px; 
+            height: 500px; 
+            
+            overflow-y: auto;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+            text-align: left;
+        }
+
+        .info-box h2 {
+            color: #333; /* Überschrift im Feld schwarz */
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .anweisung {
+            color: #555;
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        .reset-button {
+            width: 100%;
+            padding: 8px 10px;
+            background-color: #ffffff;
+            color: #000;
+            border: 1px solid #000000;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DEM-MOMono-300', monospace;
+        }
+
+        .reset-button:hover {
+            background-color: #f0f0f0;
+            border-color: #000;
+        }
+
+        .reset-button:active {
+            transform: translateX(0);
+        }
+
+        .reset-button::before {
+            content: '↻';
+            font-size: 24px;
+        }
+
+        .sidebar textarea {
+            width: 100%;
+            min-height: 50px;
+            padding: 3px 5px;
+            background-color: #ffffff;
+            border: 1px solid #000000;
+            color: #000;
+            font-family: 'DEM-MOMono-300', monospace;
+            font-size: 11px;
+            resize: vertical;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .sidebar textarea::placeholder {
+            color: #999;
+        }
+
+        /* Type Font Selector Sidebar */
+        .type-font-selector-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 220px;
+            height: 100vh;
+            background-color: transparent;
+            z-index: 10001;
+            pointer-events: none;
+        }
+
+        .type-font-selector-overlay.active {
+            display: block;
+            pointer-events: auto;
+        }
+
+        .type-font-selector-popup {
+            background-color: #ffffff;
+            border-right: 2px solid #000000;
+            padding: 20px;
+            width: 100%;
+            height: 100vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .type-font-selector-popup h3 {
+            margin: 0 0 10px 0;
+            font-family: 'DEM-MOMono-300', monospace;
+            font-size: 12px;
+            text-transform: none;
+            letter-spacing: 0;
+            border-bottom: none;
+            padding-bottom: 5px;
+            text-align: center;
+        }
+
+        .type-font-item {
+            padding: 3px 5px;
+            margin-bottom: 5px;
+            border: 1px solid #000000;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            font-size: 11px;
+            min-height: auto;
+            display: flex;
+            align-items: center;
+            background-color: #ffffff;
+            color: #000000;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-family: 'DEM-MOMono-300', monospace;
+            width: 100%;
+        }
+
+        .type-font-item:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .type-font-item.has-variants::after {
+            content: '▶';
+            position: absolute;
+            right: 5px;
+            font-size: 8px;
+            font-family: 'DEM-MOMono-300', monospace;
+        }
+
+        .type-font-variants-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 440px;
+            width: calc(100% - 440px);
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: 10002;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .type-font-variants-overlay.active {
+            display: flex;
+        }
+
+        .type-font-variants-popup {
+            background-color: #ffffff;
+            border: 2px solid #000000;
+            padding: 20px;
+            max-width: 220px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .type-font-variants-popup h4 {
+            margin: 0 0 10px 0;
+            font-family: 'DEM-MOMono-300', monospace;
+            font-size: 12px;
+            text-transform: none;
+            letter-spacing: 0;
+            border-bottom: none;
+            padding-bottom: 5px;
+            text-align: center;
+        }
+
+        .type-font-variant-item {
+            padding: 3px 5px;
+            margin-bottom: 5px;
+            border: 1px solid #000000;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 11px;
+            min-height: auto;
+            display: flex;
+            align-items: center;
+            background-color: #ffffff;
+            color: #000000;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-family: 'DEM-MOMono-300', monospace;
+            width: 100%;
+        }
+
+        .type-font-variant-item:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .type-font-variant-item.active {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .close-font-selector {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #000000;
+            font-family: 'DEM-MOMono-300', monospace;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-font-selector:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Info Button -->
+    <button class="info-button" id="infoButton">i</button>
+    
+    <!-- Home Button -->
+    <a href="file:///Users/eazy-e/Documents/UNI/HSD/3_SEMESTER/PUB/technoooo/TECHNOTOOLS.html" class="home-button" id="homeButton">⌂</a>
+
+    <!-- Info Floating Window -->
+    <div class="info-overlay" id="infoOverlay">
+        <div class="info-window">
+            <button class="info-close" id="infoClose">×</button>
+            <p>Create your own techno beat by clicking on different drums and sounds in the sequencer grid. As the rhythm plays, the visuals react in real time and can be transformed into text. Customize the result by changing fonts and applying effects, then save your final text creation.</p>
+        </div>
+    </div>
+    <div class="sidebar">
+        <button class="reset-button" id="resetButton"></button>
+        <textarea id="textInput" placeholder="Type text here..."></textarea>
+        
+        <h3 style="margin-top: 20px;">Effect</h3>
+        <button id="effect1Btn" class="font-option effect-btn active" style="background-color: #000000; color: #ffffff; font-weight: 300;">Outlines</button>
+        <button id="effect2Btn" class="font-option effect-btn" style="background-color: #ffffff; color: #000000; font-weight: 300;">Randomize</button>
+        <button id="effect3Btn" class="font-option effect-btn" style="background-color: #ffffff; color: #000000; font-weight: 300;">Cursive</button>
+        <button id="effect4Btn" class="font-option effect-btn" style="background-color: #ffffff; color: #000000; font-weight: 300;">Distort</button>
+        <button id="effect5Btn" class="font-option effect-btn" style="background-color: #ffffff; color: #000000; font-weight: 300;">Mirror</button>
+        <button id="effect6Btn" class="font-option effect-btn" style="background-color: #ffffff; color: #000000; font-weight: 300;">Blur</button>
+        
+        <h3 style="margin-top: 20px;">Typeface</h3>
+        <button id="typeButton" class="font-option" style="background-color: #000000; color: #ffffff; font-weight: 300;">TYPEFACE</button>
+        
+        <h3 style="margin-top: 20px;">Export</h3>
+        <button id="saveTextBtn" class="font-option" style="background-color: #000000; color: #ffffff; font-weight: 300;">Save Text</button>
+        
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-family: 'DEM-MOMono-400', monospace; font-size: 14px; color: #000000;">TEMPO:</label>
+            <input id="tempoRange" type="range" min="1000" max="2000" step="100" value="1600" style="width:100%; height:3px; -webkit-appearance:none; appearance:none; background:linear-gradient(to right, #000 0%, #000 100%); border:none; outline:none; cursor:pointer;" />
+        </div>
+    </div>
+
+    <!-- Type Font Selector Modal -->
+    <div class="type-font-selector-overlay" id="typeFontSelectorOverlay">
+        <div class="type-font-selector-popup">
+            <button class="close-font-selector" id="closeTypeFontSelector">×</button>
+            <h3>Select Font Family</h3>
+            <div id="typeFontSelectorContent"></div>
+        </div>
+    </div>
+
+    <!-- Type Font Variants Modal -->
+    <div class="type-font-variants-overlay" id="typeFontVariantsOverlay">
+        <div class="type-font-variants-popup">
+            <button class="close-font-selector" id="closeTypeFontVariants">×</button>
+            <h4 id="typeFontVariantsTitle">Font Variants</h4>
+            <div id="typeFontVariantsContent"></div>
+        </div>
+    </div>
+    <div class="main-container">
+        <div class="grid-container" id="grid"></div>
+        
+        <style>
+            #tempoRange::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 6px;
+                height: 15px;
+                background: #000;
+                border: 1px solid #000;
+                cursor: pointer;
+                border-radius: 0;
+            }
+            #tempoRange::-moz-range-thumb {
+                width: 6px;
+                height: 15px;
+                background: #000;
+                border: 1px solid #000;
+                cursor: pointer;
+                border-radius: 0;
+            }
+        </style>
+        
+        <div class="text-output" id="textOutput"></div>
+    </div>
+
+    <script>
+        // Upper grid (4 rows x 16 cols) + bottom text-output + scan line
+        const grid = document.getElementById('grid');
+        const textInput = document.getElementById('textInput');
+        const textOutput = document.getElementById('textOutput');
+
+        const rows = 5;
+        const cols = 16;
+        const gridCells = []; // row-major: index = r*cols + c
+
+        // Build upper grid (4x16)
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = r;
+                cell.dataset.col = c;
+                cell.addEventListener('click', () => {
+                    cell.classList.toggle('active');
+                    updateTextOutput();
+                });
+                grid.appendChild(cell);
+                gridCells.push(cell);
+            }
+        }
+
+        // Row sound mapping (5 rows)
+        const rowFiles = [
+            'Samples für Emil/Kicks/TPS - Ecstatic - Kick 03.wav',
+            'Samples für Emil/Closed Hats/TPS - Ecstatic - Closed Hat 03.wav',
+            'Samples für Emil/Clap und Snare/TPS - Ecstatic - Snare 01.wav',
+            'Samples für Emil/Open Hats/TPS - Ecstatic - Open Hat 04.wav',
+            'Samples für Emil/Bass Shots/TPS - Ecstatic - Bass Shot 08 C.wav'
+        ];
+
+        // Web Audio API für clean sound playback
+        let audioContext = null;
+        let audioBuffers = [];
+        let audioUnlocked = false;
+        let lastPlayTime = {}; // Track last play time per row to prevent overlap
+        const minPlayInterval = 30; // Minimum milliseconds between same sound plays
+
+        // Initialize Web Audio API
+        function initAudioContext() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.error('Web Audio API not supported:', e);
+                // Fallback to HTML5 Audio
+                return false;
+            }
+            return true;
+        }
+
+        // Load audio files as buffers
+        async function loadAudioBuffers() {
+            if (!audioContext) return;
+            
+            try {
+                for (let i = 0; i < rowFiles.length; i++) {
+                    const response = await fetch(rowFiles[i]);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    audioBuffers[i] = audioBuffer;
+                }
+            } catch (error) {
+                console.error('Error loading audio buffers:', error);
+                // Fallback to HTML5 Audio
+                return false;
+            }
+            return true;
+        }
+
+        // Fallback HTML5 Audio
+        const rowSounds = rowFiles.map(p => {
+            const a = new Audio(p);
+            a.preload = 'auto';
+            return a;
+        });
+
+        let audioUnlockedHTML5 = false;
+        function unlockAudioHTML5() {
+            if (audioUnlockedHTML5) return;
+            rowSounds.forEach(a => {
+                a.volume = 0;
+                a.play().then(() => { a.pause(); a.currentTime = 0; a.volume = 1; }).catch(()=>{});
+            });
+            audioUnlockedHTML5 = true;
+        }
+
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            
+            // Try Web Audio API first
+            if (initAudioContext()) {
+                loadAudioBuffers().then(success => {
+                    if (success) {
+                        audioUnlocked = true;
+                    } else {
+                        // Fallback to HTML5
+                        unlockAudioHTML5();
+            audioUnlocked = true;
+                    }
+                });
+            } else {
+                // Fallback to HTML5
+                unlockAudioHTML5();
+                audioUnlocked = true;
+            }
+        }
+        document.addEventListener('pointerdown', unlockAudio, { once: true });
+
+        async function ensureAudioContextRunning() {
+            if (audioContext && audioContext.state === 'suspended') {
+                try {
+                    await audioContext.resume();
+                } catch (error) {
+                    console.error('Error resuming audio context:', error);
+                }
+            }
+        }
+
+        function playRowSound(rowIndex) {
+            if (!audioUnlocked) return;
+            if (rowIndex < 0 || rowIndex >= rowFiles.length) return;
+            
+            const now = Date.now();
+            
+            // Prevent rapid re-triggering of same sound
+            if (lastPlayTime[rowIndex] && (now - lastPlayTime[rowIndex]) < minPlayInterval) {
+                return;
+            }
+            lastPlayTime[rowIndex] = now;
+            
+            // Use Web Audio API if available
+            if (audioContext && audioBuffers[rowIndex]) {
+                ensureAudioContextRunning().then(() => {
+                    try {
+                        const source = audioContext.createBufferSource();
+                        source.buffer = audioBuffers[rowIndex];
+                        source.connect(audioContext.destination);
+                        
+                        // Schedule playback with precise timing
+                        const currentTime = audioContext.currentTime;
+                        source.start(currentTime);
+                        
+                        // Clean up after playback
+                        source.onended = () => {
+                            source.disconnect();
+                        };
+                    } catch (error) {
+                        console.error('Error playing sound with Web Audio API:', error);
+                        // Fallback to HTML5
+                        playRowSoundHTML5(rowIndex);
+                    }
+                }).catch(() => {
+                    // Fallback to HTML5
+                    playRowSoundHTML5(rowIndex);
+                });
+            } else {
+                // Fallback to HTML5 Audio
+                playRowSoundHTML5(rowIndex);
+            }
+        }
+
+        function playRowSoundHTML5(rowIndex) {
+            if (!audioUnlockedHTML5) {
+                unlockAudioHTML5();
+            }
+            const base = rowSounds[rowIndex];
+            if (!base) return;
+            
+            // Clone and play for clean playback
+            const inst = base.cloneNode(true);
+            inst.volume = 1;
+            inst.currentTime = 0;
+            inst.play().catch(err => {
+                console.error('Error playing sound:', err);
+            });
+        }
+
+        // Current font family for text output
+        let currentFont = 'DEM-MO typeface';
+        
+        // Create invisible scan line over grid
+        const gridScanLine = document.createElement('div');
+        gridScanLine.className = 'grid-scan-line';
+        grid.appendChild(gridScanLine);
+
+        function updateTextOutput() {
+            const raw = textInput.value || '';
+            if (raw.trim().length === 0) {
+                // empty: clear bottom output
+                textOutput.innerHTML = '';
+                return;
+            }
+
+            // Clean input - remove existing line breaks
+            let cleaned = raw.replace(/\r/g, '').replace(/\n/g, '');
+            
+            // Add "(again)" to text if Effect 2 is active and has been randomized
+            if (currentEffect === 2 && effect2Randomized) {
+                cleaned += ' (again)';
+            }
+            
+            // Format text: exactly 16 characters per line
+            // Characters (including spaces) are processed one by one
+            // Spaces are treated as normal characters - they don't cause line breaks
+            const charsPerLine = 16;
+            
+            // Process text character by character (spaces are kept as normal characters)
+            const formattedLines = [];
+            let currentLine = '';
+            
+            for (let i = 0; i < cleaned.length; i++) {
+                const char = cleaned[i];
+                
+                // Check if adding this character would exceed 16 characters
+                const testLength = currentLine.length + 1;
+                
+                if (testLength > charsPerLine && currentLine.length > 0) {
+                    // Character would exceed 16 characters - move to next line
+                    if (currentLine.length > 0) {
+                        formattedLines.push(currentLine);
+                    }
+                    // Start new line with the character
+                    currentLine = char;
+                } else {
+                    // Character fits - add it to current line (spaces are treated normally)
+                    currentLine += char;
+                }
+                
+                // Limit total characters to rows * 16
+                const totalChars = formattedLines.join('').length + currentLine.length;
+                if (totalChars >= rows * charsPerLine) {
+                    // Trim current line to fit
+                    const remaining = rows * charsPerLine - formattedLines.join('').length;
+                    if (currentLine.length > remaining) {
+                        currentLine = currentLine.substring(0, remaining);
+                    }
+                    break;
+                }
+            }
+            
+            // Add the last line if it has content
+            if (currentLine.length > 0) {
+                formattedLines.push(currentLine);
+            }
+            
+            // Convert lines to array of characters, padding to 16 chars per line
+            let allChars = [];
+            formattedLines.forEach(line => {
+                const lineChars = line.split('');
+                // Pad line to exactly 16 characters
+                while (lineChars.length < 16 && allChars.length < rows * 16) {
+                    lineChars.push(' ');
+                }
+                // Limit to 16 characters
+                const limitedChars = lineChars.slice(0, 16);
+                allChars = allChars.concat(limitedChars);
+            });
+            
+            // Limit to exactly rows * 16 characters
+            if (allChars.length > rows * 16) {
+                allChars = allChars.slice(0, rows * 16);
+            }
+            
+            // Pad to complete rows if needed
+            while (allChars.length < rows * 16 && allChars.length % 16 !== 0) {
+                allChars.push(' ');
+            }
+            
+            // Split into lines of exactly 16 characters
+            let formattedText = [];
+            for (let i = 0; i < allChars.length; i += 16) {
+                formattedText.push(allChars.slice(i, i + 16).join(''));
+            }
+            
+            // Now render the formatted text
+            textOutput.innerHTML = '';
+            const frag = document.createDocumentFragment();
+            
+            let globalCharIndex = 0;
+            
+            formattedText.forEach((line, lineIdx) => {
+                // Create a wrapper for each line to support justified alignment
+                const lineWrapper = document.createElement('div');
+                lineWrapper.className = 'line-wrapper';
+                
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    
+                    // Calculate grid position: row and column based on character index
+                    const r = Math.floor(globalCharIndex / cols);
+                    const c = globalCharIndex % cols;
+                    
+                    // Only process characters that fit in our grid (5 rows x 16 cols = 80 chars max)
+                    if (r >= rows) break;
+
+                    const span = document.createElement('span');
+                    span.className = 'char-span';
+                    span.dataset.row = r;
+                    span.dataset.col = c;
+                    span.dataset.idx = globalCharIndex;
+                    
+                    // Check if corresponding grid cell is active
+                    const topCell = gridCells[r * cols + c];
+                    const topActive = topCell && topCell.classList.contains('active');
+
+                    // render character
+                    span.textContent = ch;
+
+                    // Apply font family - use TYPEFACE font if set, otherwise use currentFont
+                    if (typeFontName && typeFontName !== 'DEM-MO typeface Regular') {
+                        span.style.fontFamily = `'${typeFontName}'`;
+                        span.style.fontWeight = typeFontWeight;
+                        span.style.fontStyle = typeFontStyle;
+                    } else if (currentFont === 'Bitcount') {
+                        // Bitcount font-family (may vary depending on Adobe Fonts project)
+                        span.style.fontFamily = 'bitcount, sans-serif';
+                    } else if (currentFont === 'dot_matrix-expanded bold') {
+                        span.style.fontFamily = "'dot_matrix-expanded bold', sans-serif";
+                    } else if (currentFont === 'DEM-MO typeface') {
+                        span.style.fontFamily = "'DEM-MO typeface', sans-serif";
+                    } else {
+                        span.style.fontFamily = `'${currentFont}', sans-serif`;
+                    }
+
+                    // Set effect for active characters based on grid cell state and current effect
+                    if (topActive) {
+                        span.classList.add('active-char');
+                        
+                        // For Effect 2, only apply font if it's already been set (don't change on every update)
+                        // Font will only change when randomizeEffect2Fonts() is called
+                        if (currentEffect === 2 && effect2CurrentFont) {
+                            applyEffect2FontToSpan(span);
+                        }
+                        
+                        // For Effect 3, apply italic style
+                        if (currentEffect === 3) {
+                            applyItalicToSpan(span);
+                        }
+                        
+                        // For Effect 4, apply distortion
+                        if (currentEffect === 4) {
+                            applyDistortionToSpan(span);
+                        }
+                        
+                        // Effect 5 (Mirror) is handled by CSS transform: scaleX(-1)
+                    }
+                    
+                    // Apply effect class to text-output container for CSS targeting
+                    textOutput.classList.remove('effect-1', 'effect-2', 'effect-3');
+                    if (currentEffect === 1) {
+                        textOutput.classList.add('effect-1');
+                    } else if (currentEffect === 2) {
+                        textOutput.classList.add('effect-2');
+                    } else if (currentEffect === 3) {
+                        textOutput.classList.add('effect-3');
+                    }
+
+                    lineWrapper.appendChild(span);
+                    globalCharIndex++;
+                }
+                
+                frag.appendChild(lineWrapper);
+            });
+
+            textOutput.appendChild(frag);
+            
+            // Apply effect class to text-output container
+            textOutput.classList.remove('effect-1', 'effect-2', 'effect-3', 'effect-4', 'effect-5', 'effect-6');
+            if (currentEffect === 1) {
+                textOutput.classList.add('effect-1');
+            } else if (currentEffect === 2) {
+                textOutput.classList.add('effect-2');
+            } else if (currentEffect === 3) {
+                textOutput.classList.add('effect-3');
+            } else if (currentEffect === 4) {
+                textOutput.classList.add('effect-4');
+            } else if (currentEffect === 5) {
+                textOutput.classList.add('effect-5');
+            } else if (currentEffect === 6) {
+                textOutput.classList.add('effect-6');
+            }
+            
+            // Also update the text-output container font for new characters
+            if (typeFontName && typeFontName !== 'DEM-MO typeface Regular') {
+                textOutput.style.fontFamily = `'${typeFontName}'`;
+                textOutput.style.fontWeight = typeFontWeight;
+                textOutput.style.fontStyle = typeFontStyle;
+            } else if (currentFont === 'DEM-MO typeface') {
+                textOutput.style.fontFamily = "'DEM-MO typeface', sans-serif";
+            } else if (currentFont === 'dot_matrix-expanded bold') {
+                textOutput.style.fontFamily = "'dot_matrix-expanded bold', sans-serif";
+            } else {
+                textOutput.style.fontFamily = `'${currentFont}', sans-serif`;
+            }
+            
+            // Adjust container size to fit content, including italic characters
+            setTimeout(() => {
+                adjustTextOutputSize();
+            }, 0);
+        }
+        
+        // Function to adjust text output container size based on content
+        function adjustTextOutputSize() {
+            if (!textOutput || textOutput.children.length === 0) {
+                // Reset to default if empty
+                textOutput.style.width = 'fit-content';
+                return;
+            }
+            
+            // Get all line wrappers
+            const lineWrappers = textOutput.querySelectorAll('.line-wrapper');
+            if (lineWrappers.length === 0) return;
+            
+            let maxWidth = 0;
+            
+            // Measure each line to find the maximum width
+            lineWrappers.forEach((lineWrapper) => {
+                // Get the bounding box of the line including all children
+                const rect = lineWrapper.getBoundingClientRect();
+                const lineWidth = rect.width;
+                
+                // Also check individual spans for italic extension
+                const spans = lineWrapper.querySelectorAll('.char-span');
+                let lineRightEdge = 0;
+                spans.forEach((span) => {
+                    const spanRect = span.getBoundingClientRect();
+                    const spanRight = spanRect.right;
+                    if (spanRight > lineRightEdge) {
+                        lineRightEdge = spanRight;
+                    }
+                });
+                
+                // Calculate width from left edge of line to rightmost span
+                const lineLeft = rect.left;
+                const actualLineWidth = lineRightEdge - lineLeft;
+                
+                if (actualLineWidth > maxWidth) {
+                    maxWidth = actualLineWidth;
+                }
+            });
+            
+            // Add padding for italic characters that might extend beyond
+            // Calculate based on font size (96px) and italic angle
+            const fontSize = 96;
+            const italicExtension = fontSize * 0.25; // ~25% extension for italic
+            
+            // Set the container width to accommodate the widest line plus padding
+            const containerPadding = 40; // Left and right padding (already in CSS)
+            const requiredWidth = maxWidth + (italicExtension * 2);
+            
+            // Update text output width, but respect max-width constraint
+            const viewportWidth = window.innerWidth;
+            const maxAllowedWidth = viewportWidth - 40; // Account for margins
+            const finalWidth = Math.max(requiredWidth, maxWidth + containerPadding);
+            const constrainedWidth = Math.min(finalWidth, maxAllowedWidth);
+            
+            textOutput.style.width = `${constrainedWidth}px`;
+            
+            // Ensure overflow is visible
+            textOutput.style.overflow = 'visible';
+        }
+
+        textInput.addEventListener('input', updateTextOutput);
+        updateTextOutput();
+        
+        // Adjust text output size on window resize
+        window.addEventListener('resize', () => {
+            adjustTextOutputSize();
+        });
+
+        // Scan animation across grid (smooth left->right in scanDuration ms, then restart)
+        let scanStart = null;
+        let scanDuration = 1000; // ms, default 1 second full left->right
+        let prevColIndex = -1;
+
+        function positionGridScanByProgress(progress) {
+            const gridRect = grid.getBoundingClientRect();
+            const firstCell = gridCells[0];
+            const lastCell = gridCells[cols - 1];
+            
+            if (!firstCell || !lastCell) return;
+            
+            const firstRect = firstCell.getBoundingClientRect();
+            const lastRect = lastCell.getBoundingClientRect();
+            
+            const firstCenter = firstRect.left - gridRect.left + firstRect.width / 2;
+            const lastCenter = lastRect.left - gridRect.left + lastRect.width / 2;
+            
+            // Calculate position based on progress (0 to 1)
+            const x = firstCenter + (lastCenter - firstCenter) * progress - (gridScanLine.clientWidth / 2);
+            gridScanLine.style.transform = `translateX(${x}px)`;
+        }
+
+        function highlightGridColumn(colIndex) {
+            // Remove scan-active class from all cells
+            gridCells.forEach(cell => cell.classList.remove('scan-active'));
+            
+            // Add scan-active class to all cells in current column
+            for (let r = 0; r < rows; r++) {
+                const cellIndex = r * cols + colIndex;
+                const cell = gridCells[cellIndex];
+                if (cell) {
+                    cell.classList.add('scan-active');
+                }
+            }
+        }
+
+        function animateScan(ts) {
+            if (!scanStart) scanStart = ts;
+            const elapsed = (ts - scanStart) % scanDuration;
+            const progress = elapsed / scanDuration; // 0..1
+
+            // continuous position of scan line over grid
+            positionGridScanByProgress(progress);
+
+            // determine current column index (0..cols-1)
+            const colIndex = Math.floor(progress * cols);
+            highlightGridColumn(colIndex);
+
+            // if we entered a new column, trigger sounds and effects
+            if (colIndex !== prevColIndex) {
+                for (let r = 0; r < rows; r++) {
+                    const span = textOutput.querySelector(`.char-span[data-row="${r}"][data-col="${colIndex}"]`);
+                    if (!span) continue;
+                    // only trigger if this bottom span is an active-char (colored) -> punctuation or circle colored
+                    if (span.classList.contains('active-char')) {
+                        playRowSound(r);
+                    }
+                }
+                prevColIndex = colIndex;
+            }
+
+            requestAnimationFrame(animateScan);
+        }
+
+        // tempo controls: slider only
+        const tempoRange = document.getElementById('tempoRange');
+
+        function updateTempo(ms) {
+            scanDuration = ms;
+            scanStart = null; // reset to smooth transition
+        }
+
+        tempoRange.addEventListener('input', (e) => {
+            const ms = parseInt(e.target.value, 10);
+            updateTempo(ms);
+        });
+
+        // initial setup
+        updateTempo(1600);
+
+        requestAnimationFrame(animateScan);
+
+        // Reset button functionality
+        const resetButton = document.getElementById('resetButton');
+        const initialTempoValue = 1600; // Store initial tempo value
+
+        resetButton.addEventListener('click', () => {
+            // Reset all grid cells (remove active class)
+            gridCells.forEach(cell => {
+                cell.classList.remove('active');
+                cell.classList.remove('playing');
+                cell.classList.remove('scan-active');
+            });
+
+            // Clear textarea
+            textInput.value = '';
+
+            // Reset tempo slider to initial value
+            tempoRange.value = initialTempoValue;
+            updateTempo(initialTempoValue);
+
+            // Update text output (this will clear it since textarea is empty)
+            updateTextOutput();
+        });
+
+
+        // TYPEFACE Button Font Selector Functionality
+        // Available fonts with all variants
+        const fontFamilies = {
+            'DEM-MOMono-300': {
+                variants: [
+                    { name: 'Regular', weight: '300', style: 'normal', path: 'DEM-MO typeface/Mono/DEM-MOMono-300.otf' }
+                ]
+            },
+            'ABC Arizona Flare': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/ABCArizonaFlare-Thin-Trial.otf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/ABCArizonaFlare-ThinItalic-Trial.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/ABCArizonaFlare-Light-Trial.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/ABCArizonaFlare-LightItalic-Trial.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/ABCArizonaFlare-Regular-Trial.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/ABCArizonaFlare-RegularItalic-Trial.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/ABCArizonaFlare-Medium-Trial.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/ABCArizonaFlare-MediumItalic-Trial.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/ABCArizonaFlare-Bold-Trial.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/ABCArizonaFlare-BoldItalic-Trial.otf' }
+                ]
+            },
+            'ABC Gravity Expanded': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Expanded-Trial.otf' }
+                ]
+            },
+            'Conduit': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'conduit/conduit.ttf' }
+                ]
+            },
+            'Pixform': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'pixform/Pixform.ttf' }
+                ]
+            },
+            'DEM-MO typeface': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'DEM-MO typeface/Proportional/DEM-MO-400.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'DEM-MO typeface/Proportional/DEM-MO-700.otf' }
+                ]
+            },
+            'dot_matrix-expanded bold': {
+                variants: [
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'dot_matrix/fonts/ttf/DotMatrix-ExpandedBold.ttf' }
+                ]
+            },
+            'ZT Nature': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/zt_nature/ZTNature-Thin.ttf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/zt_nature/ZTNature-ThinItalic.ttf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/zt_nature/ZTNature-Medium.ttf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/zt_nature/ZTNature-MediumItalic.ttf' },
+                    { name: 'Black', weight: '900', style: 'normal', path: 'Fonts/zt_nature/ZTNature-Black.ttf' },
+                    { name: 'Black Italic', weight: '900', style: 'italic', path: 'Fonts/zt_nature/ZTNature-BlackItalic.ttf' }
+                ]
+            },
+            'Coolvetica': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/coolvetica/Coolvetica Rg.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/coolvetica/Coolvetica Rg It.otf' },
+                    { name: 'Condensed', weight: '400', style: 'normal', path: 'Fonts/coolvetica/Coolvetica Rg Cond.otf' },
+                    { name: 'Compressed', weight: '400', style: 'normal', path: 'Fonts/coolvetica/Coolvetica Rg Cram.otf' },
+                    { name: 'Heavy Compressed', weight: '900', style: 'normal', path: 'Fonts/coolvetica/Coolvetica Hv Comp.otf' }
+                ]
+            },
+            'Heavitas': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/heavitas/Heavitas.ttf' }
+                ]
+            },
+            'Pixel Digivolve': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/pixel_digivolve/Pixel Digivolve.otf' },
+                    { name: 'Italic', weight: '400', style: 'italic', path: 'Fonts/pixel_digivolve/Pixel Digivolve Italic.otf' }
+                ]
+            },
+            'ABC Diatype': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/ABCDiatype-Thin-Trial.otf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/ABCDiatype-ThinItalic-Trial.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/ABCDiatype-Light-Trial.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/ABCDiatype-LightItalic-Trial.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/ABCDiatype-Regular-Trial.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/ABCDiatype-RegularItalic-Trial.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/ABCDiatype-Medium-Trial.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/ABCDiatype-MediumItalic-Trial.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/ABCDiatype-Bold-Trial.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/ABCDiatype-BoldItalic-Trial.otf' },
+                    { name: 'Heavy', weight: '800', style: 'normal', path: 'Fonts/ABCDiatype-Heavy-Trial.otf' },
+                    { name: 'Heavy Italic', weight: '800', style: 'italic', path: 'Fonts/ABCDiatype-HeavyItalic-Trial.otf' },
+                    { name: 'Black', weight: '900', style: 'normal', path: 'Fonts/ABCDiatype-Black-Trial.otf' },
+                    { name: 'Black Italic', weight: '900', style: 'italic', path: 'Fonts/ABCDiatype-BlackItalic-Trial.otf' },
+                    { name: 'Ultra', weight: '950', style: 'normal', path: 'Fonts/ABCDiatype-Ultra-Trial.otf' },
+                    { name: 'Ultra Italic', weight: '950', style: 'italic', path: 'Fonts/ABCDiatype-UltraItalic-Trial.otf' }
+                ]
+            },
+            'ABC Gravity': {
+                variants: [
+                    { name: 'Normal', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Normal-Trial.otf' },
+                    { name: 'Normal Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-NormalItalic-Trial.otf' },
+                    { name: 'Condensed', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Condensed-Trial.otf' },
+                    { name: 'Condensed Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-CondensedItalic-Trial.otf' },
+                    { name: 'Expanded', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Expanded-Trial.otf' },
+                    { name: 'Expanded Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-ExpandedItalic-Trial.otf' },
+                    { name: 'Extended', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Extended-Trial.otf' },
+                    { name: 'Extended Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-ExtendedItalic-Trial.otf' },
+                    { name: 'Compressed', weight: '400', style: 'normal', path: 'Fonts/ABCGravity-Compressed-Trial.otf' },
+                    { name: 'Compressed Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGravity-CompressedItalic-Trial.otf' }
+                ]
+            },
+            'ABC Ginto': {
+                variants: [
+                    { name: 'Hairline', weight: '100', style: 'normal', path: 'Fonts/ABCGinto-Hairline-Trial.otf' },
+                    { name: 'Hairline Italic', weight: '100', style: 'italic', path: 'Fonts/ABCGinto-HairlineItalic-Trial.otf' },
+                    { name: 'Thin', weight: '200', style: 'normal', path: 'Fonts/ABCGinto-Thin-Trial.otf' },
+                    { name: 'Thin Italic', weight: '200', style: 'italic', path: 'Fonts/ABCGinto-ThinItalic-Trial.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/ABCGinto-Light-Trial.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/ABCGinto-LightItalic-Trial.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/ABCGinto-Regular-Trial.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/ABCGinto-RegularItalic-Trial.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/ABCGinto-Medium-Trial.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/ABCGinto-MediumItalic-Trial.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/ABCGinto-Bold-Trial.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/ABCGinto-BoldItalic-Trial.otf' },
+                    { name: 'Black', weight: '900', style: 'normal', path: 'Fonts/ABCGinto-Black-Trial.otf' },
+                    { name: 'Black Italic', weight: '900', style: 'italic', path: 'Fonts/ABCGinto-BlackItalic-Trial.otf' },
+                    { name: 'Ultra', weight: '950', style: 'normal', path: 'Fonts/ABCGinto-Ultra-Trial.otf' },
+                    { name: 'Ultra Italic', weight: '950', style: 'italic', path: 'Fonts/ABCGinto-UltraItalic-Trial.otf' }
+                ]
+            },
+            'ABC Monument Grotesk': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Thin-Trial.otf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-ThinItalic-Trial.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Light-Trial.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-LightItalic-Trial.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Regular-Trial.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-RegularItalic-Trial.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Medium-Trial.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-MediumItalic-Trial.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Bold-Trial.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-BoldItalic-Trial.otf' },
+                    { name: 'Heavy', weight: '800', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Heavy-Trial.otf' },
+                    { name: 'Heavy Italic', weight: '800', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-HeavyItalic-Trial.otf' },
+                    { name: 'Black', weight: '900', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Black-Trial.otf' },
+                    { name: 'Black Italic', weight: '900', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-BlackItalic-Trial.otf' },
+                    { name: 'Ultra', weight: '950', style: 'normal', path: 'Fonts/ABCMonumentGrotesk-Ultra-Trial.otf' },
+                    { name: 'Ultra Italic', weight: '950', style: 'italic', path: 'Fonts/ABCMonumentGrotesk-UltraItalic-Trial.otf' }
+                ]
+            },
+            'G2 Airdancer': {
+                variants: [
+                    { name: 'Compressed', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Compressed/G2Airdancer-Compressed.otf' },
+                    { name: 'Compressed Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Compressed Round/G2Airdancer-CompressedRound.otf' },
+                    { name: 'Compressed Semi-Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Compressed Semi-Round/G2Airdancer-CompressedSemi-Round.otf' },
+                    { name: 'Condensed', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Condensed/G2AirdancerCondesed-Regular.otf' },
+                    { name: 'Condensed Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Condensed Round/G2Airdancer-CondensedRound.otf' },
+                    { name: 'Condensed Semi Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Condensed Semi Round/G2Airdancer-Regular.otf' },
+                    { name: 'Expanded', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Expanded/G2Airdancer-Expanded.otf' },
+                    { name: 'Expanded Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Expanded Round/G2Airdancer-ExpandedRound.otf' },
+                    { name: 'Expanded Semi-Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Expanded Semi-Round/G2Airdancer-ExpandedSemiRound.otf' },
+                    { name: 'Extended', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Extended/G2Airdancer-Extended.otf' },
+                    { name: 'Extended Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Extended Round/G2Airdancer-ExtendedRound.otf' },
+                    { name: 'Extended Semi-Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Extended Semi-Round/G2Airdancer-ExtendedSemiRound.otf' },
+                    { name: 'Normal', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Normal/G2Airdancer-Normal.otf' },
+                    { name: 'Normal Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Normal Round/G2Airdancer-NormalRound.otf' },
+                    { name: 'Normal Semi-Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Normal Semi-Round/G2AirdancerNormal-SemiRound.otf' },
+                    { name: 'Ultra Expanded', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Ultra Expanded/G2Airdancer-UltraExpanded.otf' },
+                    { name: 'Ultra Expanded Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Ultra Expanded Round/G2Airdancer-UltraExpandedRound.otf' },
+                    { name: 'Ultra Expanded Semi Round', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Airdancer/G2 Airdancer Ultra Expanded Semi Round/G2Airdancer-UltraExpandedSemiRound.otf' }
+                ]
+            },
+            'G2 Ciao': {
+                variants: [
+                    { name: 'Sharp Sharp', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Sharp/G2Ciao-SharpSharp.otf' },
+                    { name: 'Sharp Sharp Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Sharp Swift/G2Ciao-SharpSharpSwift.otf' },
+                    { name: 'Sharp Silent', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Silent/G2Ciao-SharpSilent.otf' },
+                    { name: 'Sharp Silent Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Silent Swift/G2Ciao-SharpSilentSwift.otf' },
+                    { name: 'Sharp Strong', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Strong/G2Ciao-StrongSharp.otf' },
+                    { name: 'Sharp Strong Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Sharp Strong Swift/G2Ciao-StrongSharpSwift.otf' },
+                    { name: 'Silent Sharp', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Sharp/G2Ciao-SilentSharp.otf' },
+                    { name: 'Silent Sharp Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Sharp Swift/G2Ciao-SilentSharpSwift.otf' },
+                    { name: 'Silent Silent', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Silent/G2Ciao-SilentSilent.otf' },
+                    { name: 'Silent Silent Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Silent Swift/G2Ciao-SilentSilentSwift.otf' },
+                    { name: 'Silent Strong', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Strong/G2Ciao-SilentStrong.otf' },
+                    { name: 'Silent Strong Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Silent Strong Swift/G2Ciao-SilentStrongSwift.otf' },
+                    { name: 'Strong Sharp', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Sharp/G2Ciao-StrongSharp.otf' },
+                    { name: 'Strong Sharp Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Sharp Swift/G2Ciao-StrongSharpSwift.otf' },
+                    { name: 'Strong Silent', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Silent/G2Ciao-StrongSilent.otf' },
+                    { name: 'Strong Silent Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Silent Swift/G2Ciao-StrongSilentSwift.otf' },
+                    { name: 'Strong Strong', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Strong/G2Ciao-StrongStrong.otf' },
+                    { name: 'Strong Strong Swift', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Ciao/G2 Ciao Strong Strong Swift/G2Ciao-StrongStrongSwift.otf' }
+                ]
+            },
+            'G2 Erika': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Thin/G2Erika-Thin.otf' },
+                    { name: 'Thin Italic', weight: '100', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Thin/G2Erika-ThinItalic.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Light/G2Erika-Light.otf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Light/G2Erika-LightItalic.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Regular/G2-Erika-Regular.otf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Regular/G2-Erika-RegularItalic.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Medium/G2Erika-Medium.otf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Medium/G2Erika-MediumItalic.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Bold/G2Erika-Bold.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika/Bold/G2Erika-BoldItalic.otf' }
+                ]
+            },
+            'G2 Erika Mono': {
+                variants: [
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2 Erika Mono Regular/G2-Erika-Mono.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2 Erika Mono Medium/G2ErikaMono-Medium.otf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Erika/G2 Erika Mono/G2 Erika Mono Bold/G2ErikaMono-Bold.otf' }
+                ]
+            },
+            'G2 Kosmos': {
+                variants: [
+                    { name: 'Extended', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Kosmos/G2 Kosmos Extended/G2Kosmos-Extended.otf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 Kosmos/G2 Kosmos Regular/G2Kosmos-Regular.otf' }
+                ]
+            },
+            'G2 TGR': {
+                variants: [
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Bold/G2TGR-Bold.otf' },
+                    { name: 'Bold Italic', weight: '700', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Bold Italic/G2-TGR-BoldItalic.otf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Light/G2TGR-Light.ttf' },
+                    { name: 'Light Italic', weight: '300', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Light Italic/G2-TGR-LightItalic.otf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Medium/G2TGR-Medium.ttf' },
+                    { name: 'Medium Italic', weight: '500', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Medium Italic/G2-TGR-MediumItalic.ttf' },
+                    { name: 'Mono', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Mono/G2TGR-Mono.ttf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Regular/G2TGR-Regular.ttf' },
+                    { name: 'Regular Italic', weight: '400', style: 'italic', path: 'Fonts/_G2 STUDENTS 2025/G2 TGR/G2 TGR Regular Italic/G2-TGR-RegularItalic.otf' }
+                ]
+            },
+            'DRKrapkaRound': {
+                variants: [
+                    { name: 'Thin', weight: '100', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Thin.ttf' },
+                    { name: 'Thin Oblique', weight: '100', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ThinObl.ttf' },
+                    { name: 'Thin Upward Oblique', weight: '100', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ThinUpObl.ttf' },
+                    { name: 'ExtraLight', weight: '200', style: 'normal', path: 'Fonts/font/DRKrapkaRound-ExtraLight.ttf' },
+                    { name: 'ExtraLight Oblique', weight: '200', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ExtraLightObl.ttf' },
+                    { name: 'ExtraLight Upward Oblique', weight: '200', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ExtraLightUpObl.ttf' },
+                    { name: 'Light', weight: '300', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Light.ttf' },
+                    { name: 'Light Oblique', weight: '300', style: 'italic', path: 'Fonts/font/DRKrapkaRound-LightObl.ttf' },
+                    { name: 'Light Upward Oblique', weight: '300', style: 'italic', path: 'Fonts/font/DRKrapkaRound-LightUpObl.ttf' },
+                    { name: 'Regular', weight: '400', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Regular.ttf' },
+                    { name: 'Regular Oblique', weight: '400', style: 'italic', path: 'Fonts/font/DRKrapkaRound-RegularObl.ttf' },
+                    { name: 'Regular Upward Oblique', weight: '400', style: 'italic', path: 'Fonts/font/DRKrapkaRound-RegularUpObl.ttf' },
+                    { name: 'Medium', weight: '500', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Medium.ttf' },
+                    { name: 'Medium Oblique', weight: '500', style: 'italic', path: 'Fonts/font/DRKrapkaRound-MediumObl.ttf' },
+                    { name: 'Medium Upward Oblique', weight: '500', style: 'italic', path: 'Fonts/font/DRKrapkaRound-MediumUpObl.ttf' },
+                    { name: 'Bold', weight: '700', style: 'normal', path: 'Fonts/font/DRKrapkaRound-Bold.ttf' },
+                    { name: 'Bold Oblique', weight: '700', style: 'italic', path: 'Fonts/font/DRKrapkaRound-BoldObl.ttf' },
+                    { name: 'Bold Upward Oblique', weight: '700', style: 'italic', path: 'Fonts/font/DRKrapkaRound-BoldUpObl.ttf' },
+                    { name: 'ExtraBold', weight: '800', style: 'normal', path: 'Fonts/font/DRKrapkaRound-ExtraBold.ttf' },
+                    { name: 'ExtraBold Oblique', weight: '800', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ExtraBoldObl.ttf' },
+                    { name: 'ExtraBold Upward Oblique', weight: '800', style: 'italic', path: 'Fonts/font/DRKrapkaRound-ExtraBoldUpObl.ttf' }
+                ]
+            }
+        };
+
+        // Current font state for TYPEFACE selector
+        let typeFont = 'DEM-MO typeface';
+        let typeFontWeight = '400';
+        let typeFontStyle = 'normal';
+        let typeFontName = 'DEM-MO typeface Regular';
+
+        // Current effect (1 = outline, 2 = random fonts, 3 = italic, 4 = distort, 5 = mirror, 6 = blur)
+        let currentEffect = 1;
+        let effect2Active = false; // Track if Effect 2 (random fonts) has been activated
+        let effect2CurrentFont = null; // Store the current random font for Effect 2
+        let effect2Randomized = false; // Track if Randomize has been pressed at least once
+        let effect4Distorted = false; // Track if Distort has been pressed at least once
+        
+        // Function to check if a font weight is considered "thick" (bold/heavy)
+        function isThickFont(weight) {
+            const weightNum = parseInt(weight);
+            if (!isNaN(weightNum)) {
+                return weightNum >= 700; // Bold and above
+            }
+            // Check variant name for bold keywords
+            const weightStr = String(weight).toLowerCase();
+            return weightStr.includes('bold') || weightStr.includes('heavy') || 
+                   weightStr.includes('black') || weightStr.includes('ultra') ||
+                   weightStr.includes('900') || weightStr.includes('950');
+        }
+        
+        // Function to get a random font from fontFamilies
+        function getRandomFont() {
+            const fontFamilyKeys = Object.keys(fontFamilies);
+            const randomFamilyKey = fontFamilyKeys[Math.floor(Math.random() * fontFamilyKeys.length)];
+            const family = fontFamilies[randomFamilyKey];
+            if (!family || !family.variants || family.variants.length === 0) {
+                return { family: 'DEM-MO typeface', variant: { name: 'Regular', weight: '400', style: 'normal' } };
+            }
+            const randomVariant = family.variants[Math.floor(Math.random() * family.variants.length)];
+            return { family: randomFamilyKey, variant: randomVariant };
+        }
+        
+        // Function to get a font with opposite weight (thin if thick, thick if thin)
+        function getOppositeWeightFont(baseFont) {
+            const isThick = isThickFont(baseFont.variant.weight) || 
+                           baseFont.variant.name.toLowerCase().includes('bold') ||
+                           baseFont.variant.name.toLowerCase().includes('heavy') ||
+                           baseFont.variant.name.toLowerCase().includes('black') ||
+                           baseFont.variant.name.toLowerCase().includes('ultra');
+            
+            // Collect all fonts with opposite weight
+            const oppositeFonts = [];
+            for (const [familyKey, family] of Object.entries(fontFamilies)) {
+                if (!family || !family.variants) continue;
+                for (const variant of family.variants) {
+                    const variantIsThick = isThickFont(variant.weight) ||
+                                         variant.name.toLowerCase().includes('bold') ||
+                                         variant.name.toLowerCase().includes('heavy') ||
+                                         variant.name.toLowerCase().includes('black') ||
+                                         variant.name.toLowerCase().includes('ultra');
+                    
+                    if (isThick && !variantIsThick) {
+                        // Base is thick, need thin
+                        const weightNum = parseInt(variant.weight);
+                        if (!isNaN(weightNum) && weightNum <= 300) {
+                            oppositeFonts.push({ family: familyKey, variant: variant });
+                        } else if (variant.name.toLowerCase().includes('thin') || 
+                                  variant.name.toLowerCase().includes('light')) {
+                            oppositeFonts.push({ family: familyKey, variant: variant });
+                        }
+                    } else if (!isThick && variantIsThick) {
+                        // Base is thin, need thick
+                        oppositeFonts.push({ family: familyKey, variant: variant });
+                    }
+                }
+            }
+            
+            // If no opposite fonts found, return a default
+            if (oppositeFonts.length === 0) {
+                return { family: 'DEM-MO typeface', variant: { name: 'Regular', weight: '400', style: 'normal' } };
+            }
+            
+            // Return random opposite font
+            return oppositeFonts[Math.floor(Math.random() * oppositeFonts.length)];
+        }
+        
+        // Function to apply the current Effect 2 font to a span
+        function applyEffect2FontToSpan(span) {
+            if (!effect2CurrentFont) {
+                effect2CurrentFont = getRandomFont();
+            }
+            
+            // Get opposite weight font for individual characters
+            const individualFont = getOppositeWeightFont(effect2CurrentFont);
+            const fontName = `${individualFont.family} ${individualFont.variant.name}`;
+            
+            // Load the font variant
+            loadFontVariant(individualFont.family, individualFont.variant);
+            
+            // Apply to span
+            span.style.fontFamily = `'${fontName}'`;
+            span.style.fontWeight = individualFont.variant.weight;
+            span.style.fontStyle = individualFont.variant.style;
+        }
+        
+        // Function to randomize fonts for all active characters in Effect 2
+        function randomizeEffect2Fonts() {
+            if (currentEffect !== 2) return;
+            
+            // Get a new random font (this is the "base" font)
+            effect2CurrentFont = getRandomFont();
+            
+            // Apply opposite weight fonts to all active characters
+            const activeSpans = textOutput.querySelectorAll('.char-span.active-char');
+            activeSpans.forEach(span => {
+                applyEffect2FontToSpan(span);
+            });
+        }
+        
+        // Function to check if a font family has an italic variant
+        function hasItalicVariant(fontFamily) {
+            const family = fontFamilies[fontFamily];
+            if (!family || !family.variants) return false;
+            return family.variants.some(v => v.style === 'italic' || v.name.toLowerCase().includes('italic'));
+        }
+        
+        // Function to get italic variant of current font or apply manual skew
+        function applyItalicToSpan(span) {
+            // Get the current font family - check span style first, then typeFontName, then currentFont
+            let currentFontFamily = span.style.fontFamily;
+            if (!currentFontFamily || currentFontFamily === 'inherit') {
+                if (typeFontName && typeFontName !== 'DEM-MO typeface Regular') {
+                    currentFontFamily = typeFontName;
+                } else {
+                    currentFontFamily = currentFont || 'DEM-MO typeface';
+                }
+            }
+            
+            // Extract font family name (remove quotes and variant name)
+            let fontFamilyName = currentFontFamily.replace(/['"]/g, '');
+            // Remove variant name if present (e.g., "ABC Arizona Flare Regular" -> "ABC Arizona Flare")
+            const fontFamilyKeys = Object.keys(fontFamilies);
+            for (const key of fontFamilyKeys) {
+                if (fontFamilyName.includes(key)) {
+                    fontFamilyName = key;
+                    break;
+                }
+            }
+            
+            // Try to find the font family in fontFamilies
+            let foundFamily = null;
+            if (fontFamilies[fontFamilyName]) {
+                foundFamily = { key: fontFamilyName, family: fontFamilies[fontFamilyName] };
+            }
+            
+            if (foundFamily && hasItalicVariant(foundFamily.key)) {
+                // Find italic variant - try to match the current weight
+                const currentWeight = span.style.fontWeight || typeFontWeight || '400';
+                let italicVariant = foundFamily.family.variants.find(v => 
+                    (v.style === 'italic' || v.name.toLowerCase().includes('italic')) &&
+                    v.weight === currentWeight
+                );
+                
+                // If no exact weight match, find any italic variant
+                if (!italicVariant) {
+                    italicVariant = foundFamily.family.variants.find(v => 
+                        v.style === 'italic' || v.name.toLowerCase().includes('italic')
+                    );
+                }
+                
+                if (italicVariant) {
+                    const fontName = `${foundFamily.key} ${italicVariant.name}`;
+                    loadFontVariant(foundFamily.key, italicVariant);
+                    span.style.fontFamily = `'${fontName}'`;
+                    span.style.fontWeight = italicVariant.weight;
+                    span.style.fontStyle = 'italic';
+                    span.classList.remove('no-italic');
+                } else {
+                    // No italic variant found, use manual skew
+                    span.style.fontStyle = 'normal';
+                    span.classList.add('no-italic');
+                }
+            } else {
+                // Font family not found or no italic variant, use manual skew
+                span.style.fontStyle = 'normal';
+                span.classList.add('no-italic');
+            }
+        }
+        
+        // Function to apply random distortion to a span (stretch width or height)
+        function applyDistortionToSpan(span) {
+            // Random distortion: either stretch horizontally or vertically
+            const distortionType = Math.random() < 0.5 ? 'width' : 'height';
+            
+            if (distortionType === 'width') {
+                // Stretch horizontally (wider)
+                const scaleX = 0.5 + Math.random() * 1.0; // 0.5 to 1.5
+                span.style.transform = `scaleX(${scaleX})`;
+            } else {
+                // Stretch vertically (taller)
+                const scaleY = 0.5 + Math.random() * 1.0; // 0.5 to 1.5
+                span.style.transform = `scaleY(${scaleY})`;
+            }
+        }
+
+        // Function to load font dynamically
+        function loadFontVariant(fontFamily, variant) {
+            const fontName = `${fontFamily} ${variant.name}`;
+            const fontId = `font-${fontName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}`;
+            const existingStyle = document.getElementById(fontId);
+            if (existingStyle) return; // Font already loaded
+
+            const style = document.createElement('style');
+            style.id = fontId;
+            
+            let fontSrc = '';
+            if (variant.path.endsWith('.otf')) {
+                fontSrc = `url('${variant.path}') format('opentype')`;
+            } else if (variant.path.endsWith('.ttf')) {
+                fontSrc = `url('${variant.path}') format('truetype')`;
+            } else {
+                // Fallback: assume .otf extension
+                fontSrc = `url('${variant.path}.otf') format('opentype')`;
+            }
+
+            style.textContent = `
+                @font-face {
+                    font-family: '${fontName}';
+                    src: ${fontSrc};
+                    font-weight: ${variant.weight};
+                    font-style: ${variant.style};
+                    font-display: swap;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Type Font Selector Elements
+        const typeButton = document.getElementById('typeButton');
+        const typeFontSelectorOverlay = document.getElementById('typeFontSelectorOverlay');
+        const typeFontSelectorContent = document.getElementById('typeFontSelectorContent');
+        const closeTypeFontSelector = document.getElementById('closeTypeFontSelector');
+        const typeFontVariantsOverlay = document.getElementById('typeFontVariantsOverlay');
+        const typeFontVariantsContent = document.getElementById('typeFontVariantsContent');
+        const typeFontVariantsTitle = document.getElementById('typeFontVariantsTitle');
+        const closeTypeFontVariants = document.getElementById('closeTypeFontVariants');
+
+        // Function to render type font selector
+        function renderTypeFontSelector() {
+            if (!typeFontSelectorContent) return;
+            typeFontSelectorContent.innerHTML = '';
+            
+            for (const fontFamily of Object.keys(fontFamilies)) {
+                const family = fontFamilies[fontFamily];
+                if (!family || !family.variants || family.variants.length === 0) continue;
+                
+                const fontItem = document.createElement('div');
+                fontItem.className = 'type-font-item';
+                if (family.variants.length > 1) {
+                    fontItem.classList.add('has-variants');
+                }
+                
+                // Load first variant for preview
+                const firstVariant = family.variants[0];
+                loadFontVariant(fontFamily, firstVariant);
+                
+                const previewFontName = `${fontFamily} ${firstVariant.name}`;
+                // Set font family for display (name in its own font)
+                fontItem.style.fontFamily = `'${previewFontName}'`;
+                fontItem.style.fontWeight = firstVariant.weight;
+                fontItem.style.fontStyle = firstVariant.style;
+                // Display font family name
+                fontItem.textContent = fontFamily;
+                
+                fontItem.addEventListener('click', () => {
+                    if (family.variants.length > 1) {
+                        // Open variants window
+                        showFontVariants(fontFamily);
+                    } else {
+                        // Apply single variant directly
+                        applyFontVariant(fontFamily, firstVariant);
+                        typeFontSelectorOverlay.classList.remove('active');
+                    }
+                });
+                
+                typeFontSelectorContent.appendChild(fontItem);
+            }
+        }
+
+        // Function to show font variants
+        function showFontVariants(fontFamily) {
+            typeFontVariantsTitle.textContent = fontFamily;
+            typeFontVariantsContent.innerHTML = '';
+            
+            const family = fontFamilies[fontFamily];
+            if (!family || !family.variants) return;
+
+            for (const variant of family.variants) {
+                const variantItem = document.createElement('div');
+                variantItem.className = 'type-font-variant-item';
+                
+                // Load font variant
+                loadFontVariant(fontFamily, variant);
+                
+                const fontName = `${fontFamily} ${variant.name}`;
+                // Set font family for display (variant name in its own font)
+                variantItem.style.fontFamily = `'${fontName}'`;
+                variantItem.style.fontWeight = variant.weight;
+                variantItem.style.fontStyle = variant.style;
+                // Display variant name with example text
+                variantItem.textContent = `${variant.name} - ABC abc 123`;
+                
+                // Check if this is the current font
+                if (typeFont === fontFamily && 
+                    typeFontWeight === variant.weight && 
+                    typeFontStyle === variant.style) {
+                    variantItem.classList.add('active');
+                }
+                
+                variantItem.addEventListener('click', () => {
+                    applyFontVariant(fontFamily, variant);
+                    typeFontVariantsOverlay.classList.remove('active');
+                    typeFontSelectorOverlay.classList.remove('active');
+                });
+                
+                typeFontVariantsContent.appendChild(variantItem);
+            }
+            
+            typeFontVariantsOverlay.classList.add('active');
+        }
+
+        // Function to apply font variant
+        function applyFontVariant(fontFamily, variant) {
+            loadFontVariant(fontFamily, variant);
+            
+            const fontName = `${fontFamily} ${variant.name}`;
+            typeFont = fontFamily;
+            typeFontWeight = variant.weight;
+            typeFontStyle = variant.style;
+            typeFontName = fontName;
+            
+            // Update font for all char-spans in text output immediately
+            const charSpans = textOutput.querySelectorAll('.char-span');
+            charSpans.forEach(span => {
+                span.style.fontFamily = `'${fontName}'`;
+                span.style.fontWeight = variant.weight;
+                span.style.fontStyle = variant.style;
+            });
+            
+            // Also update the text-output container for new characters
+            textOutput.style.fontFamily = `'${fontName}'`;
+            textOutput.style.fontWeight = variant.weight;
+            textOutput.style.fontStyle = variant.style;
+            
+            // Update currentFont for compatibility
+            currentFont = fontFamily;
+        }
+
+        // Type button event listener
+        typeButton.addEventListener('click', () => {
+            const isActive = typeFontSelectorOverlay.classList.contains('active');
+            if (isActive) {
+                typeFontSelectorOverlay.classList.remove('active');
+            } else {
+                renderTypeFontSelector();
+                typeFontSelectorOverlay.classList.add('active');
+            }
+        });
+
+        // Close buttons
+        closeTypeFontSelector.addEventListener('click', () => {
+            typeFontSelectorOverlay.classList.remove('active');
+        });
+
+        closeTypeFontVariants.addEventListener('click', () => {
+            typeFontVariantsOverlay.classList.remove('active');
+        });
+
+        // Close on overlay click (only for variants overlay, not sidebar)
+        typeFontVariantsOverlay.addEventListener('click', (e) => {
+            if (e.target === typeFontVariantsOverlay) {
+                typeFontVariantsOverlay.classList.remove('active');
+            }
+        });
+
+        // Save Text as JPEG
+        const saveTextBtn = document.getElementById('saveTextBtn');
+        saveTextBtn.addEventListener('click', async () => {
+            if (!textOutput || textOutput.innerHTML.trim() === '') {
+                alert('No text available to save.');
+                return;
+            }
+
+            try {
+                // Temporarily hide sidebar and other elements for clean capture
+                const sidebar = document.querySelector('.sidebar');
+                const grid = document.getElementById('grid');
+                const controls = document.querySelector('.controls');
+                
+                const sidebarOriginal = sidebar ? sidebar.style.display : '';
+                const gridOriginal = grid ? grid.style.display : '';
+                const controlsOriginal = controls ? controls.style.display : '';
+                
+                if (sidebar) sidebar.style.display = 'none';
+                if (grid) grid.style.display = 'none';
+                if (controls) controls.style.display = 'none';
+
+                // Wait a bit for layout to settle
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Get the actual size of the text content (including overflow)
+                const rect = textOutput.getBoundingClientRect();
+                let scrollWidth = textOutput.scrollWidth || rect.width;
+                const scrollHeight = textOutput.scrollHeight || rect.height;
+                
+                // Calculate actual width including italic overflow
+                // Check all character spans to find the rightmost position
+                const charSpans = textOutput.querySelectorAll('.char-span');
+                let maxRight = 0;
+                
+                if (charSpans.length > 0) {
+                    charSpans.forEach(span => {
+                        const spanRect = span.getBoundingClientRect();
+                        const containerRect = textOutput.getBoundingClientRect();
+                        const relativeRight = spanRect.right - containerRect.left;
+                        maxRight = Math.max(maxRight, relativeRight);
+                    });
+                    
+                    // Add extra padding for italic text (typically 10-20% of font size)
+                    // Check if any text is italic
+                    const hasItalic = Array.from(charSpans).some(span => {
+                        const styles = window.getComputedStyle(span);
+                        return styles.fontStyle === 'italic' || styles.fontStyle === 'oblique';
+                    });
+                    
+                    if (hasItalic && maxRight > 0) {
+                        // Add padding for italic overflow (approximately 15% of font size)
+                        const fontSize = parseFloat(window.getComputedStyle(charSpans[0]).fontSize) || 96;
+                        const italicPadding = fontSize * 0.15;
+                        // Add extra padding to ensure last character is fully visible
+                        const extraPadding = 20;
+                        scrollWidth = Math.max(scrollWidth, maxRight + italicPadding + extraPadding);
+                    } else if (maxRight > 0) {
+                        // Add extra padding even for non-italic text to ensure last character is visible
+                        const extraPadding = 20;
+                        scrollWidth = Math.max(scrollWidth, maxRight + extraPadding);
+                    }
+                }
+                
+                // Add minimum padding to ensure last character is always visible
+                scrollWidth += 20;
+                
+                // Capture the text output element with filters preserved
+                // Use the actual scroll dimensions to capture everything, including italic overflow
+                const canvas = await html2canvas(textOutput, {
+                    backgroundColor: '#ffffff',
+                    scale: 4, // Very high quality / high resolution
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: false,
+                    width: scrollWidth,
+                    height: scrollHeight,
+                    x: 0,
+                    y: 0,
+                    windowWidth: scrollWidth,
+                    windowHeight: scrollHeight,
+                    ignoreElements: (element) => {
+                        // Don't ignore any elements, capture everything including filters
+                        return false;
+                    },
+                    onclone: (clonedDoc) => {
+                        // Ensure filters are preserved in the cloned document
+                        const clonedOutput = clonedDoc.querySelector('.text-output');
+                        if (clonedOutput) {
+                            // Force reflow to ensure filters are applied
+                            clonedOutput.offsetHeight;
+                        }
+                    }
+                });
+
+                // Restore original display states
+                if (sidebar) sidebar.style.display = sidebarOriginal;
+                if (grid) grid.style.display = gridOriginal;
+                if (controls) controls.style.display = controlsOriginal;
+
+                // Create final canvas with exact size of the text (no scaling, no A4 format)
+                // Add extra padding to ensure italic text is fully visible
+                const padding = 20; // Extra padding in pixels to ensure last character is visible
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = canvas.width + padding;
+                finalCanvas.height = canvas.height;
+                const finalCtx = finalCanvas.getContext('2d');
+
+                // Fill with white background
+                finalCtx.fillStyle = '#ffffff';
+                finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+                // Draw the captured content at full size (1:1, no scaling)
+                finalCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+
+                // If blur effect (effect 6) is active, apply additional blur filter
+                if (currentEffect === 6) {
+                    // Apply blur by drawing the image multiple times with slight offsets (gaussian blur approximation)
+                    const blurCanvas = document.createElement('canvas');
+                    blurCanvas.width = finalCanvas.width;
+                    blurCanvas.height = finalCanvas.height;
+                    const blurCtx = blurCanvas.getContext('2d');
+                    
+                    // Fill white background
+                    blurCtx.fillStyle = '#ffffff';
+                    blurCtx.fillRect(0, 0, blurCanvas.width, blurCanvas.height);
+                    
+                    // Apply blur by drawing multiple layers with offsets
+                    blurCtx.globalAlpha = 0.15;
+                    const offsets = [
+                        [0, 0], [1, 0], [-1, 0], [0, 1], [0, -1],
+                        [1, 1], [-1, -1], [1, -1], [-1, 1],
+                        [2, 0], [-2, 0], [0, 2], [0, -2]
+                    ];
+                    
+                    for (const [dx, dy] of offsets) {
+                        blurCtx.drawImage(finalCanvas, dx, dy, finalCanvas.width, finalCanvas.height);
+                    }
+                    
+                    // Draw original on top with higher opacity
+                    blurCtx.globalAlpha = 0.4;
+                    blurCtx.drawImage(finalCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
+                    blurCtx.globalAlpha = 1.0;
+                    
+                    // Convert to JPEG and download
+                    const dataUrl = blurCanvas.toDataURL('image/jpeg', 0.95);
+                    const link = document.createElement('a');
+                    link.download = 'text-output-' + new Date().getTime() + '.jpg';
+                    link.href = dataUrl;
+                    link.click();
+                } else {
+                    // Convert to JPEG and download for other effects
+                    const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.95);
+                    const link = document.createElement('a');
+                    link.download = 'text-output-' + new Date().getTime() + '.jpg';
+                    link.href = dataUrl;
+                    link.click();
+                }
+            } catch (error) {
+                console.error('Error saving file:', error);
+                alert('Error saving file. Please try again.');
+            }
+        });
+        // Info Button Functionality
+        const infoButton = document.getElementById('infoButton');
+        const infoOverlay = document.getElementById('infoOverlay');
+        const infoClose = document.getElementById('infoClose');
+
+        // Automatically open info window on page load with animation
+        window.addEventListener('DOMContentLoaded', () => {
+            if (infoOverlay) {
+                // Small delay to ensure animation is visible
+                setTimeout(() => {
+                    infoOverlay.classList.add('active');
+                }, 50);
+            }
+        });
+
+        infoButton.addEventListener('click', () => {
+            infoOverlay.classList.add('active');
+        });
+
+        infoClose.addEventListener('click', () => {
+            infoOverlay.classList.remove('active');
+        });
+
+        // Close info window when clicking anywhere on the page
+        document.addEventListener('click', (e) => {
+            if (infoOverlay && infoOverlay.classList.contains('active')) {
+                // Don't close if clicking inside the info window
+                if (!infoOverlay.querySelector('.info-window').contains(e.target) && e.target !== infoButton) {
+                    infoOverlay.classList.remove('active');
+                }
+            }
+        });
+
+        infoOverlay.addEventListener('click', (e) => {
+            if (e.target === infoOverlay) {
+                infoOverlay.classList.remove('active');
+            }
+        });
+
+        // Effect Buttons Functionality
+        const effect1Btn = document.getElementById('effect1Btn');
+        const effect2Btn = document.getElementById('effect2Btn');
+        const effect3Btn = document.getElementById('effect3Btn');
+        const effect4Btn = document.getElementById('effect4Btn');
+        const effect5Btn = document.getElementById('effect5Btn');
+        const effect6Btn = document.getElementById('effect6Btn');
+
+        function updateEffectButtons() {
+            // Remove active class from all effect buttons
+            effect1Btn.classList.remove('active');
+            effect2Btn.classList.remove('active');
+            effect3Btn.classList.remove('active');
+            effect4Btn.classList.remove('active');
+            effect5Btn.classList.remove('active');
+            effect6Btn.classList.remove('active');
+            
+            // Update button styles
+            effect1Btn.style.backgroundColor = currentEffect === 1 ? '#000000' : '#ffffff';
+            effect1Btn.style.color = currentEffect === 1 ? '#ffffff' : '#000000';
+            effect2Btn.style.backgroundColor = currentEffect === 2 ? '#000000' : '#ffffff';
+            effect2Btn.style.color = currentEffect === 2 ? '#ffffff' : '#000000';
+            effect3Btn.style.backgroundColor = currentEffect === 3 ? '#000000' : '#ffffff';
+            effect3Btn.style.color = currentEffect === 3 ? '#ffffff' : '#000000';
+            effect4Btn.style.backgroundColor = currentEffect === 4 ? '#000000' : '#ffffff';
+            effect4Btn.style.color = currentEffect === 4 ? '#ffffff' : '#000000';
+            effect5Btn.style.backgroundColor = currentEffect === 5 ? '#000000' : '#ffffff';
+            effect5Btn.style.color = currentEffect === 5 ? '#ffffff' : '#000000';
+            effect6Btn.style.backgroundColor = currentEffect === 6 ? '#000000' : '#ffffff';
+            effect6Btn.style.color = currentEffect === 6 ? '#ffffff' : '#000000';
+            
+            // Add active class to current effect button
+            if (currentEffect === 1) effect1Btn.classList.add('active');
+            if (currentEffect === 2) effect2Btn.classList.add('active');
+            if (currentEffect === 3) effect3Btn.classList.add('active');
+            if (currentEffect === 4) effect4Btn.classList.add('active');
+            if (currentEffect === 5) effect5Btn.classList.add('active');
+            if (currentEffect === 6) effect6Btn.classList.add('active');
+            
+            // Update button text based on whether Randomize or Distort has been used
+            // Once "(again)" appears, it stays forever
+            if (effect2Randomized) {
+                effect2Btn.textContent = 'Randomize (again)';
+            } else {
+                effect2Btn.textContent = 'Randomize';
+            }
+            
+            if (effect4Distorted) {
+                effect4Btn.textContent = 'Distort (again)';
+            } else {
+                effect4Btn.textContent = 'Distort';
+            }
+        }
+
+        effect1Btn.addEventListener('click', () => {
+            currentEffect = 1;
+            effect2Active = false;
+            effect2CurrentFont = null;
+            effect2Randomized = false;
+            updateEffectButtons();
+            updateTextOutput(); // Re-render with new effect
+        });
+
+        effect2Btn.addEventListener('click', () => {
+            if (currentEffect === 2 && effect2Active) {
+                // If Effect 2 is already active, randomize fonts (all active chars get same new font)
+                randomizeEffect2Fonts();
+                effect2Randomized = true;
+                effect2Btn.textContent = 'Randomize (again)';
+            } else {
+                // Activate Effect 2 for the first time
+                currentEffect = 2;
+                effect2Active = true;
+                effect2CurrentFont = null; // Reset font so a new one is generated
+                updateEffectButtons();
+                // Generate initial random font
+                effect2CurrentFont = getRandomFont();
+                updateTextOutput(); // Re-render with new effect
+            }
+        });
+
+        effect3Btn.addEventListener('click', () => {
+            currentEffect = 3;
+            updateEffectButtons();
+            updateTextOutput(); // Re-render with new effect
+        });
+
+        effect4Btn.addEventListener('click', () => {
+            if (currentEffect === 4) {
+                // If Effect 4 is already active, apply distortion again
+                effect4Distorted = true;
+                effect4Btn.textContent = 'Distort (again)';
+                updateTextOutput(); // Re-render with new distortion
+            } else {
+                // Activate Effect 4 for the first time
+                currentEffect = 4;
+                updateEffectButtons();
+                updateTextOutput(); // Re-render with new effect
+            }
+        });
+
+        effect5Btn.addEventListener('click', () => {
+            currentEffect = 5;
+            updateEffectButtons();
+            updateTextOutput(); // Re-render with new effect
+        });
+
+        effect6Btn.addEventListener('click', () => {
+            currentEffect = 6;
+            updateEffectButtons();
+            updateTextOutput(); // Re-render with new effect
+        });
+
+        // Initialize effect buttons (Effekt 1 is active by default)
+        updateEffectButtons();
+    </script>
+</body>
+</html>
